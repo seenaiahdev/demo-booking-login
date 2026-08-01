@@ -296,9 +296,38 @@ router.get('/video-proxy', (req, res) => {
   return res.redirect(302, targetUrl);
 });
 
-// Mount router under both /api and root /
+// Mount router under /api
 app.use('/api', router);
-app.use('/', router);
+
+// Serve built static frontend dist files
+const path = require('path');
+const fs = require('fs');
+const distPath = path.join(__dirname, '../frontend/dist');
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+}
+
+// SPA Fallback: Serve index.html for all non-API routes so "Cannot GET /" never occurs
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) return next();
+  const indexHtml = path.join(__dirname, '../frontend/dist/index.html');
+  if (fs.existsSync(indexHtml)) {
+    return res.sendFile(indexHtml);
+  }
+  return res.status(200).send(`
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>AspireNext | Portal Sign In</title>
+      </head>
+      <body>
+        <div id="root">Loading AspireNext Portal...</div>
+      </body>
+    </html>
+  `);
+});
 
 if (process.env.NODE_ENV !== 'production') {
   app.listen(PORT, () => {
