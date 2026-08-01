@@ -9,21 +9,30 @@ import { fetchProgressFromBackend, syncProgressWithBackend } from './utils/stora
 import { PlayCircle, Clock, ShieldCheck } from 'lucide-react';
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [currentView, setCurrentView] = useState('login');
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const storedUser = window.localStorage.getItem('demoLoginCurrentUser');
+      return storedUser ? JSON.parse(storedUser) : null;
+    } catch (err) {
+      return null;
+    }
+  });
+
+  const [currentView, setCurrentView] = useState(() => {
+    try {
+      const storedUser = window.localStorage.getItem('demoLoginCurrentUser');
+      if (!storedUser) return 'login';
+      const path = window.location.pathname;
+      if (path === '/success') return 'success';
+      if (path === '/home') return 'home';
+      return 'home';
+    } catch (e) {
+      return 'login';
+    }
+  });
+
   const [savedProgress, setSavedProgress] = useState({ currentTime: 0, completed: false });
   const [videoDuration, setVideoDuration] = useState(0);
-
-  useEffect(() => {
-    const storedUser = window.localStorage.getItem('demoLoginCurrentUser');
-    if (storedUser) {
-      try {
-        setCurrentUser(JSON.parse(storedUser));
-      } catch (err) {
-        window.localStorage.removeItem('demoLoginCurrentUser');
-      }
-    }
-  }, []);
 
   // Sync user watch progress directly from Supabase backend
   useEffect(() => {
@@ -33,10 +42,14 @@ export default function App() {
         if (progress.completed) {
           setCurrentUser((prev) => (prev ? { ...prev, completed: true } : prev));
           setCurrentView('success');
-          window.history.replaceState(null, '', '/success');
+          if (window.location.pathname !== '/success') {
+            window.history.replaceState(null, '', '/success');
+          }
         } else {
           setCurrentView('home');
-          window.history.replaceState(null, '', '/home');
+          if (window.location.pathname !== '/home') {
+            window.history.replaceState(null, '', '/home');
+          }
         }
       });
     }

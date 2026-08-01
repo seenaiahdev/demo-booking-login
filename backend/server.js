@@ -76,8 +76,8 @@ router.post('/login', async (req, res) => {
     }
 
     const userPass = String(userExists.password || userExists.pass || userExists.generated_password || '').trim();
-    const nameVal = String(userExists.name || userExists.firstname || userExists.first_name || '').trim().toLowerCase();
-    const userPhone = String(userExists.mbnum || userExists.mobile || userExists.phone || '').trim().replace(/[^0-9]/g, '');
+    const nameVal = String(userExists.full_name || userExists.name || userExists.firstname || userExists.first_name || '').trim().toLowerCase();
+    const userPhone = String(userExists.mobile || userExists.mbnum || userExists.phone || '').trim().replace(/[^0-9]/g, '');
     const last4 = userPhone.slice(-4);
     const derivedPass = `${nameVal}@${last4}`;
 
@@ -90,16 +90,18 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    const regId = String(userExists.registration_id || userExists.reg_id || userExists.registrationNo || userExists.reg_no || userExists.registration_number || userExists.id || '').trim();
-    const userId = String(userExists.id || userExists.email || userExists.mbnum || userPhone);
-    const userName = userExists.name || userExists.firstname || userExists.full_name || (userExists.email ? userExists.email.split('@')[0] : `User ${userPhone}`);
+    const regId = String(userExists.registration_id || userExists.reg_id || userExists.registrationNo || userExists.reg_no || userExists.id || '').trim();
+    const userId = String(userExists.id || regId || userExists.email || userPhone);
+    const userName = String(userExists.full_name || userExists.name || userExists.firstname || (userExists.email ? userExists.email.split('@')[0] : `User ${userPhone}`)).trim();
+    const userEmail = String(userExists.email || userExists.user_email || '').trim();
+    const userMobile = String(userExists.mobile || userExists.mbnum || userExists.phone || userPhone).trim();
 
     const userPayload = {
       id: userId,
       registration_id: regId,
       name: userName,
-      email: userExists.email,
-      mbnum: userExists.mbnum || userPhone
+      email: userEmail,
+      mbnum: userMobile
     };
 
     // 2nd Database Sync: Trigger initial user login sync to Google Sheets if configured
@@ -171,7 +173,39 @@ async function syncToGoogleSheets(payload) {
 // 3. SAVE PROGRESS ENDPOINT: Upserts watch state into Supabase 'video_progress' and 2nd DB Google Sheets
 router.post('/progress/:userId', async (req, res) => {
   const { userId } = req.params;
-  const { currentTime, completed, registration_id, name, email, mbnum } = req.body || {};
+  let { currentTime, completed, registration_id, name, email, mbnum } = req.body || {};
+
+  // Auto-enrich user registration_id, full_name, email, mobile from demo_booking table if missing
+  if (!registration_id || !name || name === userId) {
+    try {
+      let records = [];
+      const res1 = await supabase.from('demo_booking').select('*');
+      if (!res1.error && res1.data) records = res1.data;
+      else {
+        const res2 = await supabase.from('demo_bookings').select('*');
+        if (!res2.error && res2.data) records = res2.data;
+      }
+
+      const cleanUserId = String(userId).trim();
+      const matched = records.find(u => {
+        const uId = String(u.id || '').trim();
+        const uReg = String(u.registration_id || u.reg_id || '').trim();
+        const uEmail = String(u.email || u.user_email || '').trim().toLowerCase();
+        const uMobile = String(u.mobile || u.mbnum || u.phone || '').trim().replace(/[^0-9]/g, '');
+
+        return uId === cleanUserId || uReg === cleanUserId || (uEmail && uEmail === cleanUserId.toLowerCase()) || (uMobile && uMobile === cleanUserId.replace(/[^0-9]/g, ''));
+      });
+
+      if (matched) {
+        registration_id = registration_id || matched.registration_id || matched.reg_id || matched.id || '';
+        name = matched.full_name || matched.name || matched.firstname || name || '';
+        email = email || matched.email || matched.user_email || '';
+        mbnum = mbnum || matched.mobile || matched.mbnum || matched.phone || '';
+      }
+    } catch (errEnrich) {
+      console.warn('Backend auto-enrichment notice:', errEnrich);
+    }
+  }
 
   const progressPayload = {
     user_id: String(userId),
