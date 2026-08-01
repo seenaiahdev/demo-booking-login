@@ -80,6 +80,20 @@ Open your browser and navigate to `http://localhost:3000`.
 
 ---
 
+## 🌐 1-Click Vercel Deployment
+
+This project is pre-configured with a root `vercel.json` for single-click deployment on **Vercel**:
+
+1. Push your repository to **GitHub**:
+   ```bash
+   git push -u origin main
+   ```
+2. Log into [Vercel Dashboard](https://vercel.com) and click **"Add New Project"**.
+3. Select your `demo-booking-login` repository.
+4. Click **Deploy**. Vercel will automatically build the Vite React frontend and mount the Express backend API as serverless endpoints (`/api/*`).
+
+---
+
 ## 🗄️ Supabase Database Schema
 
 The backend connects to Supabase using two primary tables:

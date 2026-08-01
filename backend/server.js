@@ -216,6 +216,10 @@ app.get('/api/video-proxy', (req, res) => {
   return res.redirect(302, targetUrl);
 });
 
-app.listen(PORT, () => {
-  console.log(`Backend server running on http://localhost:${PORT} with live Supabase client (${SUPABASE_URL})`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Backend server running on http://localhost:${PORT} with live Supabase client (${SUPABASE_URL})`);
+  });
+}
+
+module.exports = app;
