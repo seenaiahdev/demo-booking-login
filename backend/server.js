@@ -1,4 +1,6 @@
-// Purpose: Express server strictly enforcing user authentication against Supabase demo_booking / demo_bookings table with multi-column phone/password matching and video progress tracking in video_progress table.
+try {
+  require('dotenv').config();
+} catch (e) {}
 
 const express = require('express');
 const cors = require('cors');
@@ -10,7 +12,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Live Supabase Project Credentials
+// Live Supabase Project Credentials (from process.env with fallback)
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://uuovnncsnvabnqapqehm.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1b3ZubmNzbnZhYm5xYXBxZWhtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NTM4OTc1NywiZXhwIjoyMTAwOTY1NzU3fQ.VkZDYgRxwC07XoXHhS-7Tzq4t4YqzD2zZjvjJCzgVXA';
 
@@ -69,7 +71,7 @@ router.post('/login', async (req, res) => {
     if (!userExists) {
       return res.json({
         success: false,
-        message: 'Account does not exist. Email or mobile number is not registered in demo_booking table.'
+        message: 'Account does not exist. Please check your email or mobile number.'
       });
     }
 
@@ -93,7 +95,7 @@ router.post('/login', async (req, res) => {
 
     return res.json({
       success: true,
-      message: 'Successfully authenticated via Supabase demo_booking table!',
+      message: 'Successfully authenticated!',
       user: {
         id: userId,
         email: userExists.email,
