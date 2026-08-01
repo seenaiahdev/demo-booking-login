@@ -42,6 +42,17 @@ export default function App() {
     }
   }, [currentUser?.id]);
 
+  // Update browser tab title dynamically based on active view
+  useEffect(() => {
+    if (currentView === 'login' || !currentUser) {
+      document.title = 'AspireNext | Portal Sign In';
+    } else if (currentView === 'success') {
+      document.title = 'AspireNext | Training Completed';
+    } else {
+      document.title = 'AspireNext | Video Training Session';
+    }
+  }, [currentView, currentUser]);
+
   // Strict Logout & History Security Guard (Prevents Back/Forward navigation into protected views post-logout)
   useEffect(() => {
     if (!currentUser) {

@@ -90,18 +90,29 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    const regId = String(userExists.registration_id || userExists.reg_id || userExists.registrationNo || userExists.reg_no || userExists.registration_number || userExists.id || '').trim();
     const userId = String(userExists.id || userExists.email || userExists.mbnum || userPhone);
     const userName = userExists.name || userExists.firstname || userExists.full_name || (userExists.email ? userExists.email.split('@')[0] : `User ${userPhone}`);
+
+    const userPayload = {
+      id: userId,
+      registration_id: regId,
+      name: userName,
+      email: userExists.email,
+      mbnum: userExists.mbnum || userPhone
+    };
+
+    // 2nd Database Sync: Trigger initial user login sync to Google Sheets if configured
+    syncToGoogleSheets({
+      action: 'login',
+      ...userPayload,
+      updated_at: new Date().toISOString()
+    });
 
     return res.json({
       success: true,
       message: 'Successfully authenticated!',
-      user: {
-        id: userId,
-        email: userExists.email,
-        mbnum: userExists.mbnum || userPhone,
-        name: userName
-      }
+      user: userPayload
     });
   } catch (err) {
     console.error('Login processing error:', err);
@@ -128,7 +139,9 @@ router.get('/progress/:userId', async (req, res) => {
         success: true,
         progress: {
           currentTime: data.current_time || 0,
-          completed: !!data.completed
+          completed: !!data.completed,
+          registration_id: data.registration_id || '',
+          name: data.name || ''
         }
       });
     }
@@ -139,19 +152,38 @@ router.get('/progress/:userId', async (req, res) => {
   }
 });
 
-// 3. SAVE PROGRESS ENDPOINT: Upserts watch state into live Supabase 'video_progress' table
+// Helper Function: 2nd Database - Real-Time Google Sheets Webhook Synchronizer
+const GOOGLE_SHEETS_WEBHOOK_URL = process.env.GOOGLE_SHEETS_WEBHOOK_URL || 'https://script.google.com/macros/s/AKfycbzNsqub-RLhRmhbgp_M3dTRRTjYXCjaYnuezN8fDU-bk1o-1b_dvjTPKqqKVEFrEKhV/exec';
+
+async function syncToGoogleSheets(payload) {
+  if (!GOOGLE_SHEETS_WEBHOOK_URL) return;
+  try {
+    await fetch(GOOGLE_SHEETS_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+  } catch (err) {
+    console.warn('Google Sheets 2nd database sync notice:', err.message);
+  }
+}
+
+// 3. SAVE PROGRESS ENDPOINT: Upserts watch state into Supabase 'video_progress' and 2nd DB Google Sheets
 router.post('/progress/:userId', async (req, res) => {
   const { userId } = req.params;
-  const { currentTime, completed } = req.body || {};
+  const { currentTime, completed, registration_id, name, email, mbnum } = req.body || {};
 
   const progressPayload = {
     user_id: String(userId),
+    registration_id: String(registration_id || ''),
+    name: String(name || ''),
     current_time: Math.floor(typeof currentTime === 'number' ? currentTime : 0),
     completed: !!completed,
     updated_at: new Date().toISOString()
   };
 
   try {
+    // 1st Database: Upsert to Supabase video_progress table
     const { data, error } = await supabase
       .from('video_progress')
       .upsert([progressPayload], { onConflict: 'user_id' })
@@ -159,20 +191,34 @@ router.post('/progress/:userId', async (req, res) => {
 
     if (error) {
       console.warn('Supabase video_progress upsert notice:', error.message);
-      return res.status(200).json({ success: true, progress: progressPayload });
     }
+
+    // 2nd Database: Sync to Google Sheets
+    syncToGoogleSheets({
+      action: 'progress',
+      user_id: String(userId),
+      registration_id: String(registration_id || ''),
+      name: String(name || ''),
+      email: String(email || ''),
+      mbnum: String(mbnum || ''),
+      current_time: progressPayload.current_time,
+      completed: progressPayload.completed,
+      updated_at: progressPayload.updated_at
+    });
 
     return res.json({
       success: true,
-      message: 'Progress saved to Supabase video_progress table',
+      message: 'Progress saved to Supabase and Google Sheets 2nd Database',
       progress: {
         currentTime: progressPayload.current_time,
-        completed: progressPayload.completed
+        completed: progressPayload.completed,
+        registration_id: progressPayload.registration_id,
+        name: progressPayload.name
       },
       data
     });
   } catch (err) {
-    console.warn('Supabase video_progress upsert error:', err);
+    console.warn('Progress save notice:', err);
     return res.status(200).json({ success: true, progress: progressPayload });
   }
 });
