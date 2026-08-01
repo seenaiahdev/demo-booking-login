@@ -10,11 +10,13 @@ export default function LoginPage({ onLoginSuccess }) {
   const [password, setPassword] = useState('');
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState('');
+  const [hasTermsError, setHasTermsError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setHasTermsError(false);
 
     if (!identifier.trim() || !password) {
       setError('Please fill in both Email/Mobile and Password.');
@@ -22,6 +24,7 @@ export default function LoginPage({ onLoginSuccess }) {
     }
 
     if (!agreed) {
+      setHasTermsError(true);
       setError('You must agree to the Terms & Conditions to proceed.');
       return;
     }
@@ -117,15 +120,18 @@ export default function LoginPage({ onLoginSuccess }) {
             </div>
           </div>
 
-          <div className="terms-row">
+          <div className={`terms-row ${hasTermsError ? 'terms-error-active' : ''}`}>
             <input
               type="checkbox"
               id="termsCheck"
-              className="terms-checkbox"
+              className={`terms-checkbox ${hasTermsError ? 'checkbox-error-pulse' : ''}`}
               checked={agreed}
-              onChange={(e) => setAgreed(e.target.checked)}
+              onChange={(e) => {
+                setAgreed(e.target.checked);
+                if (e.target.checked) setHasTermsError(false);
+              }}
             />
-            <label htmlFor="termsCheck">
+            <label htmlFor="termsCheck" className={hasTermsError ? 'text-red-error' : ''}>
               I agree to the Terms & Conditions and understand my session data will be saved.
             </label>
           </div>
