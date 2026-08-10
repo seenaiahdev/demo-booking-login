@@ -207,11 +207,20 @@ router.post('/progress/:userId', async (req, res) => {
     }
   }
 
+  const rawSeconds = Math.floor(typeof currentTime === 'number' ? currentTime : 0);
+  const h = Math.floor(rawSeconds / 3600);
+  const m = Math.floor((rawSeconds % 3600) / 60);
+  const s = rawSeconds % 60;
+  const watchedTimestamp = h > 0
+    ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+    : `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+
   const progressPayload = {
     user_id: String(userId),
     registration_id: String(registration_id || ''),
     name: String(name || ''),
-    current_time: Math.floor(typeof currentTime === 'number' ? currentTime : 0),
+    current_time: rawSeconds,
+    watched_timestamp: watchedTimestamp,
     completed: !!completed,
     updated_at: new Date().toISOString()
   };
@@ -228,14 +237,6 @@ router.post('/progress/:userId', async (req, res) => {
     }
 
     // 2nd Database: Sync to Google Sheets with video-format timestamp
-    const totalSecs = progressPayload.current_time;
-    const hrs = Math.floor(totalSecs / 3600);
-    const mins = Math.floor((totalSecs % 3600) / 60);
-    const secs = totalSecs % 60;
-    const watchedTimestamp = hrs > 0
-      ? `${hrs}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
-      : `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-
     syncToGoogleSheets({
       action: 'progress',
       user_id: String(userId),
