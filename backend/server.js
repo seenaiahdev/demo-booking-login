@@ -104,30 +104,48 @@ router.post('/login', async (req, res) => {
       mbnum: userMobile
     };
 
-    // 1st Database Sync: Initialize video_progress in Supabase on login (00:00)
+    // 1st Database Sync: Initialize video_progress in Supabase on login ONLY IF it doesn't exist
+    let existingTime = 0;
+    let existingTs = '00:00';
+    let existingCompleted = false;
+
     try {
-      await supabase
+      const { data: existingProgress } = await supabase
         .from('video_progress')
-        .upsert([{
-          user_id: String(userId),
-          registration_id: String(regId),
-          name: String(userName),
-          current_time: 0,
-          watched_timestamp: '00:00',
-          completed: false,
-          updated_at: new Date().toISOString()
-        }], { onConflict: 'user_id' });
+        .select('*')
+        .eq('user_id', String(userId))
+        .maybeSingle();
+
+      if (existingProgress) {
+        // User already has progress, preserve it
+        existingTime = existingProgress.current_time || 0;
+        existingTs = existingProgress.watched_timestamp || '00:00';
+        existingCompleted = !!existingProgress.completed;
+      } else {
+        // Brand new user, initialize to 00:00
+        await supabase
+          .from('video_progress')
+          .insert([{
+            user_id: String(userId),
+            registration_id: String(regId),
+            name: String(userName),
+            current_time: 0,
+            watched_timestamp: '00:00',
+            completed: false,
+            updated_at: new Date().toISOString()
+          }]);
+      }
     } catch (errDb) {
-      console.warn('Supabase initial login progress upsert notice:', errDb);
+      console.warn('Supabase initial login progress check notice:', errDb);
     }
 
-    // 2nd Database Sync: Trigger initial user login sync to Google Sheets if configured
+    // 2nd Database Sync: Trigger user login sync to Google Sheets (sending their true progress)
     syncToGoogleSheets({
       action: 'login',
       ...userPayload,
-      current_time: 0,
-      watched_timestamp: '00:00',
-      completed: false,
+      current_time: existingTime,
+      watched_timestamp: existingTs,
+      completed: existingCompleted,
       updated_at: new Date().toISOString()
     });
 
