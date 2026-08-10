@@ -275,7 +275,7 @@ router.post('/progress/:userId', async (req, res) => {
     }
 
     // 2nd Database: Sync to Google Sheets with both raw seconds and video-format timestamp
-    syncToGoogleSheets({
+    await syncToGoogleSheets({
       action: 'progress',
       user_id: String(userId),
       registration_id: String(registration_id || ''),
