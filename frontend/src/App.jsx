@@ -171,7 +171,17 @@ export default function App() {
                       <Clock size={18} className="stat-icon" />
                       <div>
                         <div className="stat-label">Saved Resume Time</div>
-                        <div className="stat-val">{Math.floor(savedProgress.currentTime || 0)} seconds</div>
+                        <div className="stat-val">
+                          {(() => {
+                            const rawSeconds = Math.floor(savedProgress.currentTime || 0);
+                            const h = Math.floor(rawSeconds / 3600);
+                            const m = Math.floor((rawSeconds % 3600) / 60);
+                            const s = rawSeconds % 60;
+                            return h > 0
+                              ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+                              : `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                          })()}
+                        </div>
                       </div>
                     </div>
 
