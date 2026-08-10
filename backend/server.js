@@ -175,7 +175,7 @@ router.get('/progress/:userId', async (req, res) => {
 });
 
 // Helper Function: 2nd Database - Real-Time Google Sheets Webhook Synchronizer
-const GOOGLE_SHEETS_WEBHOOK_URL = process.env.GOOGLE_SHEETS_WEBHOOK_URL || 'https://script.google.com/macros/s/AKfycbzNsqub-RLhRmhbgp_M3dTRRTjYXCjaYnuezN8fDU-bk1o-1b_dvjTPKqqKVEFrEKhV/exec';
+const GOOGLE_SHEETS_WEBHOOK_URL = process.env.GOOGLE_SHEETS_WEBHOOK_URL || 'https://script.google.com/macros/s/AKfycbzlDpnryyngX4FNHaWxX4NxZXYpEzBykiHo92JSydkuZuM-VJXYfgEdepGo7dQWlT-g/exec';
 
 async function syncToGoogleSheets(payload) {
   if (!GOOGLE_SHEETS_WEBHOOK_URL) return;
