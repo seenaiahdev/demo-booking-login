@@ -227,7 +227,15 @@ router.post('/progress/:userId', async (req, res) => {
       console.warn('Supabase video_progress upsert notice:', error.message);
     }
 
-    // 2nd Database: Sync to Google Sheets
+    // 2nd Database: Sync to Google Sheets with video-format timestamp
+    const totalSecs = progressPayload.current_time;
+    const hrs = Math.floor(totalSecs / 3600);
+    const mins = Math.floor((totalSecs % 3600) / 60);
+    const secs = totalSecs % 60;
+    const watchedTimestamp = hrs > 0
+      ? `${hrs}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+      : `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
     syncToGoogleSheets({
       action: 'progress',
       user_id: String(userId),
@@ -235,7 +243,7 @@ router.post('/progress/:userId', async (req, res) => {
       name: String(name || ''),
       email: String(email || ''),
       mbnum: String(mbnum || ''),
-      current_time: progressPayload.current_time,
+      current_time: watchedTimestamp,
       completed: progressPayload.completed,
       updated_at: progressPayload.updated_at
     });
