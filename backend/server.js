@@ -104,10 +104,30 @@ router.post('/login', async (req, res) => {
       mbnum: userMobile
     };
 
+    // 1st Database Sync: Initialize video_progress in Supabase on login (00:00)
+    try {
+      await supabase
+        .from('video_progress')
+        .upsert([{
+          user_id: String(userId),
+          registration_id: String(regId),
+          name: String(userName),
+          current_time: 0,
+          watched_timestamp: '00:00',
+          completed: false,
+          updated_at: new Date().toISOString()
+        }], { onConflict: 'user_id' });
+    } catch (errDb) {
+      console.warn('Supabase initial login progress upsert notice:', errDb);
+    }
+
     // 2nd Database Sync: Trigger initial user login sync to Google Sheets if configured
     syncToGoogleSheets({
       action: 'login',
       ...userPayload,
+      current_time: 0,
+      watched_timestamp: '00:00',
+      completed: false,
       updated_at: new Date().toISOString()
     });
 
