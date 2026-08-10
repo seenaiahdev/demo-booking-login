@@ -177,13 +177,19 @@ export default function AdminDashboard({ onLogout }) {
           <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#e2e8f0' }}>
             <Play size={24} color="#f43f5e"/> Global Video Configuration
           </h2>
-          <p style={{ color: '#94a3b8', marginBottom: '1rem' }}>Enter a YouTube Video ID to change the video for all users globally. (e.g. 8KCuHHeC_M0)</p>
+          <p style={{ color: '#94a3b8', marginBottom: '1rem' }}>Enter a YouTube Video ID or full YouTube URL to update the video for all users globally.</p>
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
             <input 
               className="input-field" 
               value={videoId} 
-              onChange={e => setVideoId(e.target.value)}
-              placeholder="YouTube Video ID"
+              onChange={e => {
+                const val = e.target.value;
+                const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+                const match = val.match(regExp);
+                const parsedId = (match && match[2].length === 11) ? match[2] : val;
+                setVideoId(parsedId);
+              }}
+              placeholder="e.g. https://www.youtube.com/watch?v=8KCuHHeC_M0 or 8KCuHHeC_M0"
               style={{ flex: 1, margin: 0 }}
             />
             <button onClick={updateVideoId} className="btn btn-primary" style={{ background: '#f43f5e', border: 'none' }}>Update Global Video</button>
