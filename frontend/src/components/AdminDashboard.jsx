@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactPlayer from 'react-player/lazy';
 import { ShieldCheck, LogOut, RefreshCw, Search, Filter, Play, CheckCircle, Clock } from 'lucide-react';
 import '../index.css';
 
@@ -261,17 +262,14 @@ export default function AdminDashboard({ onLogout }) {
             </div>
           </div>
           
-          {/* YouTube Preview */}
+          {/* Video Preview */}
           {videoId && (
-            <div style={{ marginTop: '2rem', borderRadius: '12px', overflow: 'hidden', border: '1px solid #334155' }}>
-              <iframe 
+            <div style={{ marginTop: '2rem', borderRadius: '12px', overflow: 'hidden', border: '1px solid #334155', backgroundColor: '#000' }}>
+              <ReactPlayer 
+                url={videoId} 
                 width="100%" 
-                height="240" 
-                src={`https://www.youtube.com/embed/${videoId}?controls=1`} 
-                title="YouTube Preview"
-                frameBorder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                allowFullScreen
+                height="240px" 
+                controls={true} 
               />
             </div>
           )}
