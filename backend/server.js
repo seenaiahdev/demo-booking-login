@@ -355,21 +355,39 @@ router.post('/admin/reset-progress', async (req, res) => {
   }
 });
 
-// 5. DYNAMIC VIDEO CONFIGURATION
-let currentVideoConfig = {
-  videoId: '8KCuHHeC_M0',
+// 5. DYNAMIC VIDEO CONFIGURATION (Persisted to Supabase)
+const DEFAULT_VIDEO_CONFIG = {
+  videoId: 'https://www.youtube.com/watch?v=8KCuHHeC_M0',
   controls: {
     playPause: true,
     volume: true,
-    fullscreen: true
+    fullscreen: true,
+    allowSkip: false
   }
 };
 
-router.get('/video-config', (req, res) => {
+let memoryCache = { ...DEFAULT_VIDEO_CONFIG };
+
+router.get('/video-config', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('video_progress')
+      .select('watched_timestamp')
+      .eq('user_id', 'SYSTEM_CONFIG')
+      .maybeSingle();
+
+    if (!error && data && data.watched_timestamp) {
+      const parsed = JSON.parse(data.watched_timestamp);
+      memoryCache = { ...memoryCache, ...parsed };
+    }
+  } catch (err) {
+    console.error('Failed to fetch config from Supabase', err);
+  }
+
   return res.json({
     success: true,
-    videoId: currentVideoConfig.videoId,
-    controls: currentVideoConfig.controls
+    videoId: memoryCache.videoId,
+    controls: memoryCache.controls
   });
 });
 
@@ -379,22 +397,49 @@ router.post('/video-config', async (req, res) => {
 
   try {
     if (videoId && typeof videoId === 'string' && videoId.trim().length > 0) {
-      currentVideoConfig.videoId = videoId.trim();
+      memoryCache.videoId = videoId.trim();
     }
     
     if (controls && typeof controls === 'object') {
-      currentVideoConfig.controls = {
-        ...currentVideoConfig.controls,
+      memoryCache.controls = {
+        ...memoryCache.controls,
         ...controls
       };
     }
 
+    // Safely insert or update without relying on unique constraints
+    const { data: existing } = await supabase
+      .from('video_progress')
+      .select('id')
+      .eq('user_id', 'SYSTEM_CONFIG')
+      .maybeSingle();
+
+    if (existing) {
+      await supabase.from('video_progress')
+        .update({
+          watched_timestamp: JSON.stringify(memoryCache),
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', 'SYSTEM_CONFIG');
+    } else {
+      await supabase.from('video_progress').insert([{
+        user_id: 'SYSTEM_CONFIG',
+        registration_id: 'SYSTEM',
+        name: 'SYSTEM_CONFIG',
+        current_time: 0,
+        watched_timestamp: JSON.stringify(memoryCache),
+        completed: false,
+        updated_at: new Date().toISOString()
+      }]);
+    }
+
     return res.json({ 
       success: true, 
-      videoId: currentVideoConfig.videoId,
-      controls: currentVideoConfig.controls 
+      videoId: memoryCache.videoId,
+      controls: memoryCache.controls 
     });
   } catch (err) {
+    console.error('Failed to save config to Supabase', err);
     return res.status(500).json({ success: false });
   }
 });
