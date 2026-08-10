@@ -308,13 +308,16 @@ router.post('/progress/:userId', async (req, res) => {
 // 4. ADMIN ENDPOINTS
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Admin@123';
 
-router.post('/admin/verify', (req, res) => {
+const handleAdminVerify = (req, res) => {
   const { password } = req.body || {};
   if (password === ADMIN_PASSWORD) {
     return res.json({ success: true });
   }
   return res.status(401).json({ success: false, message: 'Invalid admin password' });
-});
+};
+
+router.post('/admin/verify', handleAdminVerify);
+router.post('/admin/login', handleAdminVerify);
 
 router.get('/admin/users', async (req, res) => {
   const password = req.headers['x-admin-password'];
