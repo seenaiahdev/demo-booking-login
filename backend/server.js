@@ -356,25 +356,44 @@ router.post('/admin/reset-progress', async (req, res) => {
 });
 
 // 5. DYNAMIC VIDEO CONFIGURATION
-let currentVideoId = '8KCuHHeC_M0'; // Default Learn Python video
+let currentVideoConfig = {
+  videoId: '8KCuHHeC_M0',
+  controls: {
+    playPause: true,
+    volume: true,
+    fullscreen: true
+  }
+};
 
 router.get('/video-config', (req, res) => {
   return res.json({
     success: true,
-    videoId: currentVideoId
+    videoId: currentVideoConfig.videoId,
+    controls: currentVideoConfig.controls
   });
 });
 
 router.post('/video-config', async (req, res) => {
-  const { password, videoId } = req.body || {};
+  const { password, videoId, controls } = req.body || {};
   if (password !== ADMIN_PASSWORD) return res.status(401).json({ success: false });
 
   try {
     if (videoId && typeof videoId === 'string' && videoId.trim().length > 0) {
-      currentVideoId = videoId.trim();
-      return res.json({ success: true, videoId: currentVideoId });
+      currentVideoConfig.videoId = videoId.trim();
     }
-    return res.status(400).json({ success: false });
+    
+    if (controls && typeof controls === 'object') {
+      currentVideoConfig.controls = {
+        ...currentVideoConfig.controls,
+        ...controls
+      };
+    }
+
+    return res.json({ 
+      success: true, 
+      videoId: currentVideoConfig.videoId,
+      controls: currentVideoConfig.controls 
+    });
   } catch (err) {
     return res.status(500).json({ success: false });
   }

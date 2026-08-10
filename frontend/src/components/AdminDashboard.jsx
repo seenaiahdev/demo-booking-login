@@ -12,6 +12,12 @@ export default function AdminDashboard({ onLogout }) {
   
   const [videoId, setVideoId] = useState('');
   const [videoConfigMsg, setVideoConfigMsg] = useState('');
+  const [controls, setControls] = useState({
+    playPause: true,
+    volume: true,
+    fullscreen: true,
+    allowSkip: false
+  });
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -61,8 +67,9 @@ export default function AdminDashboard({ onLogout }) {
     try {
       const res = await fetch(`${API_BASE}/video-config`);
       const data = await res.json();
-      if (data.success && data.videoId) {
-        setVideoId(data.videoId);
+      if (data.success) {
+        if (data.videoId) setVideoId(data.videoId);
+        if (data.controls) setControls(data.controls);
       }
     } catch (err) {
       console.error(err);
@@ -75,11 +82,11 @@ export default function AdminDashboard({ onLogout }) {
       const res = await fetch(`${API_BASE}/video-config`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password, videoId })
+        body: JSON.stringify({ password, videoId, controls })
       });
       const data = await res.json();
       if (data.success) {
-        setVideoConfigMsg('Global video updated successfully!');
+        setVideoConfigMsg('Global config updated successfully!');
         setTimeout(() => setVideoConfigMsg(''), 3000);
       } else {
         setVideoConfigMsg('Failed to update video');
@@ -208,18 +215,54 @@ export default function AdminDashboard({ onLogout }) {
                     const parsedId = (match && match[2].length === 11) ? match[2] : val;
                     setVideoId(parsedId);
                   }}
-                  placeholder="e.g. https://www.youtube.com/watch?v=8KCuHHeC_M0 or 8KCuHHeC_M0"
-                  style={{ margin: 0 }}
+                  placeholder="e.g. https://www.youtube.com/watch?v=8KCuHHeC_M0"
+                  style={{ margin: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', color: '#f8fafc', borderColor: '#334155' }}
                 />
               </div>
             </div>
-            <button onClick={updateVideoId} className="btn-aspire-primary" style={{ background: '#f43f5e', border: 'none', height: '42px', padding: '0 1.5rem', borderRadius: '8px' }}>Update Video</button>
+            <button onClick={updateVideoId} className="btn-aspire-primary" style={{ background: '#f43f5e', border: 'none', height: '42px', padding: '0 1.5rem', borderRadius: '8px' }}>Update Config</button>
           </div>
           {videoConfigMsg && <div style={{ marginTop: '1rem', color: '#34d399', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><CheckCircle size={16}/> {videoConfigMsg}</div>}
           
+          <hr style={{ border: 'none', borderTop: '1px solid #334155', margin: '2rem 0' }} />
+
+          <h3 style={{ color: '#e2e8f0', marginBottom: '1rem', fontSize: '1.1rem' }}>User Playback Permissions</h3>
+          <p style={{ color: '#94a3b8', marginBottom: '1.5rem', fontSize: '0.9rem' }}>Toggle which controls the users are allowed to use during playback.</p>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(15, 23, 42, 0.4)', padding: '1rem', borderRadius: '8px', border: '1px solid #334155' }}>
+              <span style={{ color: '#e2e8f0' }}>Play/Pause</span>
+              <label className="toggle-switch-aspire">
+                <input type="checkbox" checked={controls.playPause} onChange={e => setControls({...controls, playPause: e.target.checked})} />
+                <span className="toggle-slider"></span>
+              </label>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(15, 23, 42, 0.4)', padding: '1rem', borderRadius: '8px', border: '1px solid #334155' }}>
+              <span style={{ color: '#e2e8f0' }}>Volume Control</span>
+              <label className="toggle-switch-aspire">
+                <input type="checkbox" checked={controls.volume} onChange={e => setControls({...controls, volume: e.target.checked})} />
+                <span className="toggle-slider"></span>
+              </label>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(15, 23, 42, 0.4)', padding: '1rem', borderRadius: '8px', border: '1px solid #334155' }}>
+              <span style={{ color: '#e2e8f0' }}>Fullscreen</span>
+              <label className="toggle-switch-aspire">
+                <input type="checkbox" checked={controls.fullscreen} onChange={e => setControls({...controls, fullscreen: e.target.checked})} />
+                <span className="toggle-slider"></span>
+              </label>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(15, 23, 42, 0.4)', padding: '1rem', borderRadius: '8px', border: '1px solid #334155' }}>
+              <span style={{ color: '#e2e8f0' }}>Allow Skipping (Anti-Cheat)</span>
+              <label className="toggle-switch-aspire">
+                <input type="checkbox" checked={controls.allowSkip} onChange={e => setControls({...controls, allowSkip: e.target.checked})} />
+                <span className="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+          
           {/* YouTube Preview */}
           {videoId && (
-            <div style={{ marginTop: '1.5rem', borderRadius: '12px', overflow: 'hidden', border: '1px solid #334155' }}>
+            <div style={{ marginTop: '2rem', borderRadius: '12px', overflow: 'hidden', border: '1px solid #334155' }}>
               <iframe 
                 width="100%" 
                 height="240" 
@@ -252,12 +295,18 @@ export default function AdminDashboard({ onLogout }) {
                   placeholder="Search by name or ID..." 
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
+                  style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)', color: '#f8fafc', borderColor: '#334155' }}
                 />
               </div>
             </div>
             <div className="form-group-aspire" style={{ width: '200px', margin: 0 }}>
               <div className="input-wrapper-aspire" style={{ padding: 0 }}>
-                <select className="input-aspire" value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ paddingLeft: '1rem', appearance: 'none' }}>
+                <select 
+                  className="input-aspire" 
+                  value={statusFilter} 
+                  onChange={e => setStatusFilter(e.target.value)} 
+                  style={{ paddingLeft: '1rem', appearance: 'none', backgroundColor: 'rgba(15, 23, 42, 0.6)', color: '#f8fafc', borderColor: '#334155' }}
+                >
                   <option value="ALL">All Statuses</option>
                   <option value="COMPLETED">Completed</option>
                   <option value="IN_PROGRESS">In Progress</option>

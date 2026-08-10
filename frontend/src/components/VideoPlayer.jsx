@@ -16,6 +16,12 @@ export default function VideoPlayer({ user, savedProgress, onComplete, onDuratio
   const savedProgressRef = useRef(savedProgress);
 
   const [globalVideoId, setGlobalVideoId] = useState('');
+  const [globalControls, setGlobalControls] = useState({
+    playPause: true,
+    volume: true,
+    fullscreen: true,
+    allowSkip: false
+  });
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -40,8 +46,9 @@ export default function VideoPlayer({ user, savedProgress, onComplete, onDuratio
         const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : '/api';
         const res = await fetch(`${API_BASE}/video-config`);
         const data = await res.json();
-        if (data.success && data.videoId) {
-          setGlobalVideoId(data.videoId);
+        if (data.success) {
+          if (data.videoId) setGlobalVideoId(data.videoId);
+          if (data.controls) setGlobalControls(data.controls);
         } else {
           setGlobalVideoId(FALLBACK_YT_VIDEO_ID);
         }
@@ -173,6 +180,21 @@ export default function VideoPlayer({ user, savedProgress, onComplete, onDuratio
     }
   }, [initPlayer]);
 
+  // Handle seeking manually via progress bar (restricted by max watched)
+  const handleSeek = (e) => {
+    if (!playerRef.current || !apiReadyRef.current) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pos = (e.clientX - rect.left) / rect.width;
+    const newTime = pos * duration;
+
+    // Anti-cheat: prevent skipping to un-watched segments unless allowed
+    if (!globalControlsRef.current?.allowSkip && newTime > maxWatchedTime) return;
+
+    playerRef.current.seekTo(newTime, true);
+    setCurrentTime(newTime);
+  };
+
   // Progress tracking interval
   const startProgressTracking = () => {
     stopProgressTracking();
@@ -184,9 +206,9 @@ export default function VideoPlayer({ user, savedProgress, onComplete, onDuratio
 
       setCurrentTime(actualTime);
 
-      // Anti-cheat: prevent skipping ahead
+      // Anti-cheat: prevent skipping ahead unless allowSkip is enabled
       setMaxWatchedTime(prev => {
-        if (actualTime > prev + 3) {
+        if (!globalControlsRef.current.allowSkip && actualTime > prev + 3) {
           playerRef.current.seekTo(prev, true);
           setCurrentTime(prev);
           return prev;
@@ -328,34 +350,39 @@ export default function VideoPlayer({ user, savedProgress, onComplete, onDuratio
 
         <div className={`yt-controls-bar ${showControlsOverlay ? 'visible' : ''}`}>
           <div
-            className="yt-progress-container-locked"
-            style={{ pointerEvents: 'none', cursor: 'not-allowed' }}
+            className={globalControls.allowSkip ? "yt-progress-container-aspire" : "yt-progress-container-locked"}
+            style={{ pointerEvents: globalControls.allowSkip ? 'auto' : 'none', cursor: globalControls.allowSkip ? 'pointer' : 'not-allowed', height: '10px', backgroundColor: 'rgba(255,255,255,0.2)', width: '100%', position: 'relative' }}
+            onClick={globalControls.allowSkip ? handleSeek : undefined}
           >
-            <div className="yt-progress-track">
-              <div className="yt-progress-fill-cyan" style={{ width: `${currentPct}%` }} />
+            <div className="yt-progress-track" style={{ height: '100%', width: '100%' }}>
+              <div className="yt-progress-fill-cyan" style={{ width: `${currentPct}%`, height: '100%', backgroundColor: '#06b6d4' }} />
             </div>
           </div>
 
           <div className="yt-controls-main">
             <div className="yt-controls-left">
-              <button className="yt-icon-btn" onClick={togglePlay} title={isPlaying ? 'Pause (k)' : 'Play (k)'}>
-                {isPlaying ? <Pause size={20} fill="white" /> : <Play size={20} fill="white" />}
-              </button>
-
-              <div className="yt-volume-group">
-                <button className="yt-icon-btn" onClick={toggleMute} title={isMuted ? 'Unmute' : 'Mute'}>
-                  {isMuted || volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
+              {globalControls.playPause && (
+                <button className="yt-icon-btn" onClick={togglePlay} title={isPlaying ? 'Pause' : 'Play'}>
+                  {isPlaying ? <Pause size={20} fill="white" /> : <Play size={20} fill="white" />}
                 </button>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="5"
-                  value={isMuted ? 0 : volume}
-                  onChange={handleVolumeChange}
-                  className="yt-volume-slider"
-                />
-              </div>
+              )}
+
+              {globalControls.volume && (
+                <div className="yt-volume-group">
+                  <button className="yt-icon-btn" onClick={toggleMute} title={isMuted ? 'Unmute' : 'Mute'}>
+                    {isMuted || volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                  </button>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="5"
+                    value={isMuted ? 0 : volume}
+                    onChange={handleVolumeChange}
+                    className="yt-volume-slider"
+                  />
+                </div>
+              )}
 
               <div className="yt-time-display">
                 {formatTime(currentTime)} / {formatTime(duration)}
@@ -371,9 +398,11 @@ export default function VideoPlayer({ user, savedProgress, onComplete, onDuratio
               <span className="yt-hd-badge">
                 <Sparkles size={12} /> YouTube HD
               </span>
-              <button className="yt-icon-btn" onClick={toggleFullscreen} title="Fullscreen (f)">
-                {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
-              </button>
+              {globalControls.fullscreen && (
+                <button className="yt-icon-btn" onClick={toggleFullscreen} title="Fullscreen">
+                  {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+                </button>
+              )}
             </div>
           </div>
         </div>
