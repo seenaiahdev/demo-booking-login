@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import ReactPlayer from 'react-player/lazy';
-import { ShieldCheck, LogOut, RefreshCw, Search, Filter, Play, CheckCircle, Clock } from 'lucide-react';
+import { ShieldCheck, LogOut, RefreshCw, Search, Filter, Play, CheckCircle, Clock, Download, ArrowUp, ArrowDown, Users, TrendingUp } from 'lucide-react';
 import '../index.css';
 
 export default function AdminDashboard({ onLogout }) {
@@ -10,43 +10,23 @@ export default function AdminDashboard({ onLogout }) {
   
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
   
+  // Sorting state
+  const [sortConfig, setSortConfig] = useState({ key: 'registration_id', direction: 'asc' });
+
+  // Video Config State
   const [videoId, setVideoId] = useState('');
-  const [videoConfigMsg, setVideoConfigMsg] = useState('');
   const [controls, setControls] = useState({
     playPause: true,
     volume: true,
     fullscreen: true,
     allowSkip: false
   });
-
-  // Filters
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [videoConfigMsg, setVideoConfigMsg] = useState('');
 
   const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : '/api';
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await fetch(`${API_BASE}/admin/verify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password })
-      });
-      const data = await res.json();
-      if (data.success) {
-        setIsAuthenticated(true);
-        setError('');
-        fetchData(password);
-        fetchVideoConfig();
-      } else {
-        setError('Invalid admin password');
-      }
-    } catch (err) {
-      setError('Server connection failed');
-    }
-  };
 
   const fetchData = async (pwd = password) => {
     setLoading(true);
@@ -90,10 +70,44 @@ export default function AdminDashboard({ onLogout }) {
         setVideoConfigMsg('Global config updated successfully!');
         setTimeout(() => setVideoConfigMsg(''), 3000);
       } else {
-        setVideoConfigMsg('Failed to update video');
+        setVideoConfigMsg('Failed to update.');
       }
     } catch (err) {
-      setVideoConfigMsg('Error updating video');
+      setVideoConfigMsg('Error updating config.');
+    }
+  };
+
+  // Toggle handlers for permissions
+  const handleToggle = (key) => {
+    setControls(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchData();
+      fetchVideoConfig();
+    }
+  }, [isAuthenticated]);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`${API_BASE}/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setIsAuthenticated(true);
+        setError('');
+        fetchData(password);
+        fetchVideoConfig();
+      } else {
+        setError('Invalid admin password');
+      }
+    } catch (err) {
+      setError('Connection error');
     }
   };
 
@@ -121,14 +135,60 @@ export default function AdminDashboard({ onLogout }) {
     }
   };
 
-  const filteredUsers = users.filter(u => {
-    const matchesSearch = (u.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (u.registration_id || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'ALL' || 
-                          (statusFilter === 'COMPLETED' && u.completed) || 
-                          (statusFilter === 'IN_PROGRESS' && !u.completed);
-    return matchesSearch && matchesStatus;
-  });
+  const exportToCSV = () => {
+    const headers = ['Registration ID', 'Name', 'Email', 'Mobile', 'Progress Time (s)', 'Progress Time (Formatted)', 'Completed'];
+    const rows = sortedUsers.map(u => [
+      u.registration_id || '',
+      u.name || '',
+      u.email || '',
+      u.mbnum || '',
+      u.current_time || 0,
+      u.watched_timestamp || '00:00',
+      u.completed ? 'YES' : 'NO'
+    ]);
+    
+    const csvContent = [headers.join(','), ...rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `aspirenext_progress_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+  };
+
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const filteredUsers = useMemo(() => {
+    return users.filter(user => {
+      const matchesSearch = 
+        (user.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (user.registration_id || '').toLowerCase().includes(searchTerm.toLowerCase());
+        
+      if (statusFilter === 'COMPLETED') return matchesSearch && user.completed;
+      if (statusFilter === 'IN_PROGRESS') return matchesSearch && !user.completed;
+      return matchesSearch;
+    });
+  }, [users, searchTerm, statusFilter]);
+
+  const sortedUsers = useMemo(() => {
+    return [...filteredUsers].sort((a, b) => {
+      const aVal = a[sortConfig.key] || '';
+      const bVal = b[sortConfig.key] || '';
+      if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [filteredUsers, sortConfig]);
+
+  // Analytics
+  const totalStudents = users.length;
+  const completedStudents = users.filter(u => u.completed).length;
+  const completionRate = totalStudents > 0 ? Math.round((completedStudents / totalStudents) * 100) : 0;
 
   if (!isAuthenticated) {
     return (
@@ -275,13 +335,43 @@ export default function AdminDashboard({ onLogout }) {
           )}
         </div>
 
+        {/* Analytics Cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+          <div className="glass-sidebar-card" style={{ padding: '1.5rem', borderRadius: '16px', background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.6))', border: '1px solid rgba(56, 189, 248, 0.2)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ padding: '12px', background: 'rgba(56, 189, 248, 0.1)', borderRadius: '12px' }}><Users size={24} color="#38bdf8" /></div>
+            <div>
+              <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Total Students</div>
+              <div style={{ color: '#f8fafc', fontSize: '1.5rem', fontWeight: 'bold' }}>{totalStudents}</div>
+            </div>
+          </div>
+          <div className="glass-sidebar-card" style={{ padding: '1.5rem', borderRadius: '16px', background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.6))', border: '1px solid rgba(52, 211, 153, 0.2)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ padding: '12px', background: 'rgba(52, 211, 153, 0.1)', borderRadius: '12px' }}><CheckCircle size={24} color="#34d399" /></div>
+            <div>
+              <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Completed</div>
+              <div style={{ color: '#f8fafc', fontSize: '1.5rem', fontWeight: 'bold' }}>{completedStudents}</div>
+            </div>
+          </div>
+          <div className="glass-sidebar-card" style={{ padding: '1.5rem', borderRadius: '16px', background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.6))', border: '1px solid rgba(244, 63, 94, 0.2)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ padding: '12px', background: 'rgba(244, 63, 94, 0.1)', borderRadius: '12px' }}><TrendingUp size={24} color="#f43f5e" /></div>
+            <div>
+              <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Completion Rate</div>
+              <div style={{ color: '#f8fafc', fontSize: '1.5rem', fontWeight: 'bold' }}>{completionRate}%</div>
+            </div>
+          </div>
+        </div>
+
         {/* User Progress Table */}
         <div className="glass-sidebar-card" style={{ background: 'rgba(30, 41, 59, 0.5)', border: '1px solid #334155', borderRadius: '16px', padding: '1.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
             <h2 style={{ color: '#e2e8f0', margin: 0 }}>User Watch Progress</h2>
-            <button onClick={() => fetchData()} className="btn-logout-aspire" disabled={loading} style={{ background: 'rgba(255,255,255,0.05)', color: '#e2e8f0', border: '1px solid #334155', padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderRadius: '6px' }}>
-              <RefreshCw size={16} className={loading ? 'spin' : ''} /> Refresh Data
-            </button>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button onClick={() => fetchData()} className="btn-logout-aspire" disabled={loading} style={{ background: 'rgba(255,255,255,0.05)', color: '#e2e8f0', border: '1px solid #334155', padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderRadius: '6px' }}>
+                <RefreshCw size={16} className={loading ? 'spin' : ''} /> Refresh
+              </button>
+              <button onClick={exportToCSV} className="btn-aspire-primary" style={{ background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.2)', padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderRadius: '6px', height: 'auto', width: 'auto', margin: 0 }}>
+                <Download size={16} /> Export CSV
+              </button>
+            </div>
           </div>
 
           {/* Filters */}
@@ -318,17 +408,25 @@ export default function AdminDashboard({ onLogout }) {
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', color: '#e2e8f0' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid #334155', color: '#94a3b8' }}>
-                  <th style={{ padding: '1rem 0.5rem' }}>Registration ID</th>
-                  <th style={{ padding: '1rem 0.5rem' }}>Name</th>
-                  <th style={{ padding: '1rem 0.5rem' }}>Progress</th>
-                  <th style={{ padding: '1rem 0.5rem' }}>Status</th>
+                  <th style={{ padding: '1rem 0.5rem', cursor: 'pointer' }} onClick={() => handleSort('registration_id')}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>Registration ID {sortConfig.key === 'registration_id' && (sortConfig.direction === 'asc' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>)}</div>
+                  </th>
+                  <th style={{ padding: '1rem 0.5rem', cursor: 'pointer' }} onClick={() => handleSort('name')}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>Name {sortConfig.key === 'name' && (sortConfig.direction === 'asc' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>)}</div>
+                  </th>
+                  <th style={{ padding: '1rem 0.5rem', cursor: 'pointer' }} onClick={() => handleSort('current_time')}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>Progress {sortConfig.key === 'current_time' && (sortConfig.direction === 'asc' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>)}</div>
+                  </th>
+                  <th style={{ padding: '1rem 0.5rem', cursor: 'pointer' }} onClick={() => handleSort('completed')}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>Status {sortConfig.key === 'completed' && (sortConfig.direction === 'asc' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>)}</div>
+                  </th>
                   <th style={{ padding: '1rem 0.5rem', textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers.length === 0 ? (
+                {sortedUsers.length === 0 ? (
                   <tr><td colSpan="5" style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>No users found</td></tr>
-                ) : filteredUsers.map(user => (
+                ) : sortedUsers.map(user => (
                   <tr key={user.user_id} style={{ borderBottom: '1px solid #1e293b' }}>
                     <td style={{ padding: '1rem 0.5rem', fontFamily: 'monospace' }}>{user.registration_id}</td>
                     <td style={{ padding: '1rem 0.5rem', fontWeight: '500' }}>{user.name}</td>
@@ -362,7 +460,6 @@ export default function AdminDashboard({ onLogout }) {
               </tbody>
             </table>
           </div>
-
         </div>
       </main>
       
