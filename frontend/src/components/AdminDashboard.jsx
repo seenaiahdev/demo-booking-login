@@ -187,6 +187,7 @@ export default function AdminDashboard({ onLogout }) {
         </button>
       </nav>
 
+      <main className="main-content" style={{ padding: '2rem' }}>
         {/* Video Configuration Section */}
         <div className="glass-sidebar-card" style={{ marginBottom: '2rem', maxWidth: '800px', background: 'rgba(30, 41, 59, 0.5)', border: '1px solid #334155', borderRadius: '16px', padding: '1.5rem' }}>
           <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#e2e8f0' }}>
