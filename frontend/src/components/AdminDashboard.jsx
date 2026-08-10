@@ -165,6 +165,9 @@ export default function AdminDashboard({ onLogout }) {
 
   const filteredUsers = useMemo(() => {
     return users.filter(user => {
+      // Exclude internal system config rows
+      if (user.user_id === 'SYSTEM_CONFIG' || user.name === 'SYSTEM_CONFIG' || user.registration_id === 'SYSTEM') return false;
+
       const matchesSearch = 
         (user.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (user.registration_id || '').toLowerCase().includes(searchTerm.toLowerCase());

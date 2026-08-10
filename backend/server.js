@@ -324,9 +324,50 @@ router.get('/admin/users', async (req, res) => {
   if (password !== ADMIN_PASSWORD) return res.status(401).json({ success: false });
 
   try {
-    const { data, error } = await supabase.from('video_progress').select('*').order('updated_at', { ascending: false });
+    const { data: progressData, error } = await supabase
+      .from('video_progress')
+      .select('*')
+      .neq('user_id', 'SYSTEM_CONFIG')
+      .order('updated_at', { ascending: false });
+
     if (error) throw error;
-    return res.json({ success: true, users: data });
+
+    // Fetch demo_booking records to enrich email & mobile number
+    let bookings = [];
+    try {
+      const res1 = await supabase.from('demo_booking').select('*');
+      if (!res1.error && res1.data) bookings = res1.data;
+      else {
+        const res2 = await supabase.from('demo_bookings').select('*');
+        if (!res2.error && res2.data) bookings = res2.data;
+      }
+    } catch (errBooking) {
+      console.warn('Could not fetch demo_booking for enrichment:', errBooking);
+    }
+
+    const enrichedUsers = (progressData || []).filter(u => u.user_id !== 'SYSTEM_CONFIG' && u.name !== 'SYSTEM_CONFIG').map(user => {
+      const cleanId = String(user.user_id || '').trim();
+      const cleanReg = String(user.registration_id || '').trim();
+
+      const matched = bookings.find(b => {
+        const bId = String(b.id || '').trim();
+        const bReg = String(b.registration_id || b.reg_id || '').trim();
+        const bEmail = String(b.email || b.user_email || '').trim().toLowerCase();
+        const bMobile = String(b.mobile || b.mbnum || b.phone || '').trim().replace(/[^0-9]/g, '');
+
+        return (cleanId && (bId === cleanId || bReg === cleanId)) ||
+               (cleanReg && (bReg === cleanReg || bId === cleanReg)) ||
+               (user.name && (b.name === user.name || b.full_name === user.name));
+      });
+
+      return {
+        ...user,
+        email: user.email || (matched ? (matched.email || matched.user_email || '') : ''),
+        mbnum: user.mbnum || (matched ? (matched.mobile || matched.mbnum || matched.phone || '') : '')
+      };
+    });
+
+    return res.json({ success: true, users: enrichedUsers });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Database error' });
   }
