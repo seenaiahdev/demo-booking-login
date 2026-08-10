@@ -202,8 +202,8 @@ export default function AdminDashboard({ onLogout }) {
           </h2>
           <p style={{ color: '#94a3b8', marginBottom: '1.25rem' }}>Enter a YouTube Video ID or full YouTube URL to update the video for all users globally.</p>
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-            <div className="form-group-aspire" style={{ flex: 1, margin: 0 }}>
-              <div className="input-wrapper-aspire">
+            <div className="form-group-aspire" style={{ flex: 1, margin: 0, width: '100%' }}>
+              <div className="input-wrapper-aspire" style={{ width: '100%' }}>
                 <Play className="input-icon-aspire" size={16} />
                 <input 
                   className="input-aspire" 
@@ -216,11 +216,11 @@ export default function AdminDashboard({ onLogout }) {
                     setVideoId(parsedId);
                   }}
                   placeholder="e.g. https://www.youtube.com/watch?v=8KCuHHeC_M0"
-                  style={{ margin: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', color: '#f8fafc', borderColor: '#334155' }}
+                  style={{ width: '100%', margin: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', color: '#f8fafc', borderColor: '#334155' }}
                 />
               </div>
             </div>
-            <button onClick={updateVideoId} className="btn-aspire-primary" style={{ background: '#f43f5e', border: 'none', height: '42px', padding: '0 1.5rem', borderRadius: '8px' }}>Update Config</button>
+            <button onClick={updateVideoId} className="btn-aspire-primary" style={{ background: '#f43f5e', border: 'none', height: '42px', padding: '0 1.5rem', borderRadius: '8px', whiteSpace: 'nowrap' }}>Update Config</button>
           </div>
           {videoConfigMsg && <div style={{ marginTop: '1rem', color: '#34d399', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><CheckCircle size={16}/> {videoConfigMsg}</div>}
           
