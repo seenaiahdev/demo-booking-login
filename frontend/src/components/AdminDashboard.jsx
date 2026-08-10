@@ -209,18 +209,19 @@ export default function AdminDashboard({ onLogout }) {
                   className="input-aspire" 
                   value={videoId} 
                   onChange={e => {
-                    const val = e.target.value;
-                    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-                    const match = val.match(regExp);
-                    const parsedId = (match && match[2].length === 11) ? match[2] : val;
-                    setVideoId(parsedId);
+                    let val = e.target.value.trim();
+                    // If it's exactly 11 characters without slashes/dots, assume it's a raw YouTube ID
+                    if (val.length === 11 && !val.includes('/') && !val.includes('.')) {
+                      val = `https://www.youtube.com/watch?v=${val}`;
+                    }
+                    setVideoId(val);
                   }}
-                  placeholder="e.g. https://www.youtube.com/watch?v=8KCuHHeC_M0"
+                  placeholder="e.g. https://www.youtube.com/watch?v=... or https://.../video.mp4"
                   style={{ width: '100%', margin: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', color: '#f8fafc', borderColor: '#334155' }}
                 />
               </div>
             </div>
-            <button onClick={updateVideoId} className="btn-aspire-primary" style={{ background: '#f43f5e', border: 'none', height: '42px', padding: '0 1.5rem', borderRadius: '8px', whiteSpace: 'nowrap' }}>Update Config</button>
+            <button onClick={updateVideoId} className="btn-aspire-primary" style={{ background: '#f43f5e', border: 'none', height: '42px', padding: '0 1.5rem', borderRadius: '8px', whiteSpace: 'nowrap', width: 'auto' }}>Update Config</button>
           </div>
           {videoConfigMsg && <div style={{ marginTop: '1rem', color: '#34d399', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><CheckCircle size={16}/> {videoConfigMsg}</div>}
           
