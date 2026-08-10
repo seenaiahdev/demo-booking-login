@@ -305,45 +305,80 @@ router.post('/progress/:userId', async (req, res) => {
   }
 });
 
-// 4. DYNAMIC VIDEO CONFIGURATION & PROXY ENDPOINTS
-let currentVideoUrl = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4';
+// 4. ADMIN ENDPOINTS
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Admin@123';
+
+router.post('/admin/verify', (req, res) => {
+  const { password } = req.body || {};
+  if (password === ADMIN_PASSWORD) {
+    return res.json({ success: true });
+  }
+  return res.status(401).json({ success: false, message: 'Invalid admin password' });
+});
+
+router.get('/admin/users', async (req, res) => {
+  const password = req.headers['x-admin-password'];
+  if (password !== ADMIN_PASSWORD) return res.status(401).json({ success: false });
+
+  try {
+    const { data, error } = await supabase.from('video_progress').select('*').order('updated_at', { ascending: false });
+    if (error) throw error;
+    return res.json({ success: true, users: data });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Database error' });
+  }
+});
+
+router.post('/admin/reset-progress', async (req, res) => {
+  const { password, user_id, registration_id, name } = req.body || {};
+  if (password !== ADMIN_PASSWORD) return res.status(401).json({ success: false });
+
+  try {
+    await supabase.from('video_progress').delete().eq('user_id', user_id);
+    
+    syncToGoogleSheets({
+      action: 'progress',
+      user_id: String(user_id),
+      registration_id: String(registration_id || ''),
+      name: String(name || ''),
+      email: '',
+      mbnum: '',
+      current_time: 0,
+      watched_timestamp: '00:00',
+      completed: false,
+      updated_at: new Date().toISOString()
+    });
+
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ success: false });
+  }
+});
+
+// 5. DYNAMIC VIDEO CONFIGURATION
+let currentVideoId = '8KCuHHeC_M0'; // Default Learn Python video
 
 router.get('/video-config', (req, res) => {
   return res.json({
     success: true,
-    videoUrl: currentVideoUrl,
-    title: 'Course Demo Video'
+    videoId: currentVideoId
   });
 });
 
 router.post('/video-config', async (req, res) => {
+  const { password, videoId } = req.body || {};
+  if (password !== ADMIN_PASSWORD) return res.status(401).json({ success: false });
+
   try {
-    const { videoUrl } = req.body || {};
-    if (videoUrl && typeof videoUrl === 'string' && videoUrl.trim().startsWith('http')) {
-      currentVideoUrl = videoUrl.trim();
-      return res.json({
-        success: true,
-        message: 'Video source URL successfully updated in backend!',
-        videoUrl: currentVideoUrl
-      });
+    if (videoId && typeof videoId === 'string' && videoId.trim().length > 0) {
+      currentVideoId = videoId.trim();
+      return res.json({ success: true, videoId: currentVideoId });
     }
-    return res.status(400).json({
-      success: false,
-      message: 'Invalid video URL. Please provide a valid HTTP/HTTPS video stream link.'
-    });
+    return res.status(400).json({ success: false });
   } catch (err) {
-    return res.status(500).json({ success: false, message: 'Server error updating video URL.' });
+    return res.status(500).json({ success: false });
   }
 });
-
-router.get('/video-proxy', (req, res) => {
-  const requestedUrl = req.query.url;
-  const targetUrl = (requestedUrl && typeof requestedUrl === 'string' && requestedUrl.trim().startsWith('http'))
-    ? requestedUrl.trim()
-    : currentVideoUrl;
-  return res.redirect(302, targetUrl);
-});
-
 // Mount router under /api
 app.use('/api', router);
 

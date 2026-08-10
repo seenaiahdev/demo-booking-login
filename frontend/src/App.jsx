@@ -5,6 +5,7 @@ import LoginPage from './components/LoginPage';
 import Header from './components/Header';
 import VideoPlayer from './components/VideoPlayer';
 import SuccessPage from './components/SuccessPage';
+import AdminDashboard from './components/AdminDashboard';
 import { fetchProgressFromBackend, syncProgressWithBackend } from './utils/storage';
 import { PlayCircle, Clock, ShieldCheck } from 'lucide-react';
 
@@ -20,6 +21,7 @@ export default function App() {
 
   const [currentView, setCurrentView] = useState(() => {
     try {
+      if (window.location.search.includes('admin=true')) return 'admin';
       const storedUser = window.localStorage.getItem('demoLoginCurrentUser');
       if (!storedUser) return 'login';
       const path = window.location.pathname;
@@ -115,11 +117,22 @@ export default function App() {
     ? Math.min(99, Math.floor(((savedProgress.currentTime || 0) / videoDuration) * 100))
     : 0;
 
+  const handleAdminLogout = () => {
+    setCurrentView('login');
+    window.history.replaceState(null, '', '/');
+  };
+
+  if (currentView === 'admin') {
+    return <AdminDashboard onLogout={handleAdminLogout} />;
+  }
+
+  if (currentView === 'login' || (!currentUser && currentView !== 'admin')) {
+    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+  }
+
   return (
     <div className="app-container">
-      {!currentUser || currentView === 'login' ? (
-        <LoginPage onLoginSuccess={handleLoginSuccess} />
-      ) : currentView === 'success' ? (
+      {currentView === 'success' ? (
         <SuccessPage user={currentUser} onLogout={handleLogout} />
       ) : (
         <>

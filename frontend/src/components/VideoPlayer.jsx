@@ -2,8 +2,8 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, CheckCircle, Sparkles } from 'lucide-react';
 import { syncProgressWithBackend } from '../utils/storage';
 
-// Default YouTube video ID: "Learn Python in 45 Minutes" by Edureka (~45 min)
-const DEFAULT_YT_VIDEO_ID = '8KCuHHeC_M0';
+// Default YouTube video ID as fallback
+const FALLBACK_YT_VIDEO_ID = '8KCuHHeC_M0';
 
 export default function VideoPlayer({ user, savedProgress, onComplete, onDurationChange }) {
   const containerRef = useRef(null);
@@ -14,6 +14,8 @@ export default function VideoPlayer({ user, savedProgress, onComplete, onDuratio
   const apiReadyRef = useRef(false);
   const hasResumedRef = useRef(false);
   const savedProgressRef = useRef(savedProgress);
+
+  const [globalVideoId, setGlobalVideoId] = useState('');
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -30,6 +32,25 @@ export default function VideoPlayer({ user, savedProgress, onComplete, onDuratio
   useEffect(() => {
     savedProgressRef.current = savedProgress;
   }, [savedProgress]);
+
+  // Fetch dynamic video configuration from backend
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : '/api';
+        const res = await fetch(`${API_BASE}/video-config`);
+        const data = await res.json();
+        if (data.success && data.videoId) {
+          setGlobalVideoId(data.videoId);
+        } else {
+          setGlobalVideoId(FALLBACK_YT_VIDEO_ID);
+        }
+      } catch (err) {
+        setGlobalVideoId(FALLBACK_YT_VIDEO_ID);
+      }
+    };
+    fetchConfig();
+  }, []);
 
   // When savedProgress arrives from Supabase, restore state and seek YouTube player
   useEffect(() => {
@@ -49,8 +70,10 @@ export default function VideoPlayer({ user, savedProgress, onComplete, onDuratio
     }
   }, [savedProgress]);
 
-  // Load YouTube IFrame API script
+  // Load YouTube IFrame API script once we have a video ID
   useEffect(() => {
+    if (!globalVideoId) return; // Wait until config is fetched
+
     if (window.YT && window.YT.Player) {
       apiReadyRef.current = true;
       initPlayer();
@@ -73,7 +96,7 @@ export default function VideoPlayer({ user, savedProgress, onComplete, onDuratio
         try { playerRef.current.destroy(); } catch (e) { /* ignore */ }
       }
     };
-  }, []);
+  }, [globalVideoId]);
 
   const initPlayer = useCallback(() => {
     if (!apiReadyRef.current || !ytContainerRef.current) return;
@@ -83,7 +106,7 @@ export default function VideoPlayer({ user, savedProgress, onComplete, onDuratio
     const resumeTime = savedProgressRef.current?.currentTime || 0;
 
     playerRef.current = new window.YT.Player(ytContainerRef.current, {
-      videoId: DEFAULT_YT_VIDEO_ID,
+      videoId: globalVideoId,
       playerVars: {
         autoplay: 0,
         controls: 0,
@@ -141,7 +164,7 @@ export default function VideoPlayer({ user, savedProgress, onComplete, onDuratio
         }
       }
     });
-  }, [user, onDurationChange, onComplete, duration, isCompleted]);
+  }, [user, onDurationChange, onComplete, duration, isCompleted, globalVideoId]);
 
   // Re-init player when YT container is available
   useEffect(() => {
