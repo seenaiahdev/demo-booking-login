@@ -124,34 +124,51 @@ export default function AdminDashboard({ onLogout }) {
 
   if (!isAuthenticated) {
     return (
-      <div className="login-container">
-        <div className="login-card" style={{ maxWidth: '400px' }}>
-          <div className="login-header">
-            <div className="logo-placeholder" style={{ backgroundColor: '#f43f5e' }}>
-              <ShieldCheck size={28} color="white" />
+      <div className="login-page-3d-wrapper">
+        <div className="glass-login-card-3d">
+          <div className="card-brand-header" style={{ justifyContent: 'center', marginBottom: '1.25rem' }}>
+            <div className="brand-logo-badge" style={{ backgroundColor: '#f43f5e', padding: '12px', borderRadius: '50%' }}>
+              <ShieldCheck size={36} color="white" />
             </div>
-            <h2>Admin Portal</h2>
-            <p>Enter the master password to proceed</p>
           </div>
-          <form onSubmit={handleLogin} className="login-form">
-            <div className="input-group">
-              <label>Master Password</label>
-              <input 
-                type="password" 
-                value={password} 
-                onChange={e => setPassword(e.target.value)}
-                placeholder="Enter admin password"
-                className="input-field"
-                autoFocus
-              />
+          <div className="form-header">
+            <h1 className="form-title" style={{ textAlign: 'center' }}>Admin Portal</h1>
+            <p className="form-subtitle" style={{ textAlign: 'center' }}>
+              Enter the master password to proceed
+            </p>
+          </div>
+          
+          {error && (
+            <div className="alert-error-aspire">
+              <ShieldCheck size={16} />
+              <span>{error}</span>
             </div>
-            {error && <div className="error-message">{error}</div>}
-            <button type="submit" className="btn btn-primary" style={{ width: '100%', background: '#f43f5e', border: 'none' }}>
+          )}
+
+          <form onSubmit={handleLogin}>
+            <div className="form-group-aspire">
+              <label className="form-label-aspire">
+                Master Password<span>*</span>
+              </label>
+              <div className="input-wrapper-aspire">
+                <ShieldCheck className="input-icon-aspire" size={16} />
+                <input 
+                  type="password" 
+                  value={password} 
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="Enter admin password"
+                  className="input-aspire"
+                  autoFocus
+                />
+              </div>
+            </div>
+            
+            <button type="submit" className="btn-aspire-primary" style={{ width: '100%', background: '#f43f5e', border: 'none', color: 'white', display: 'flex', justifyContent: 'center' }}>
               Authenticate
             </button>
           </form>
           <div style={{ textAlign: 'center', marginTop: '20px' }}>
-            <button onClick={onLogout} className="btn" style={{ background: 'transparent', border: '1px solid #334155' }}>Back to User Login</button>
+            <button onClick={onLogout} className="btn-logout-aspire" style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b', fontSize: '0.9rem' }}>Back to User Login</button>
           </div>
         </div>
       </div>
@@ -159,49 +176,52 @@ export default function AdminDashboard({ onLogout }) {
   }
 
   return (
-    <div className="portal-layout">
-      <nav className="top-nav">
-        <div className="nav-logo">
-          <div className="logo-placeholder" style={{ backgroundColor: '#f43f5e' }}><ShieldCheck size={24} color="white" /></div>
+    <div className="app-container" style={{ minHeight: '100vh', background: '#0f172a' }}>
+      <nav className="top-nav" style={{ padding: '1rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1e293b' }}>
+        <div className="nav-logo" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#e2e8f0', fontWeight: 'bold', fontSize: '1.25rem' }}>
+          <div style={{ backgroundColor: '#f43f5e', padding: '8px', borderRadius: '8px', display: 'flex' }}><ShieldCheck size={20} color="white" /></div>
           <span>AspireNext Admin</span>
         </div>
-        <button onClick={onLogout} className="btn btn-outline">
+        <button onClick={onLogout} className="btn-logout-aspire" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(244, 63, 94, 0.1)', color: '#f43f5e', border: '1px solid rgba(244, 63, 94, 0.2)', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer' }}>
           <LogOut size={18} /> Exit Admin
         </button>
       </nav>
 
-      <main className="main-content" style={{ padding: '2rem' }}>
-        
         {/* Video Configuration Section */}
-        <div className="glass-sidebar-card" style={{ marginBottom: '2rem', maxWidth: '800px' }}>
+        <div className="glass-sidebar-card" style={{ marginBottom: '2rem', maxWidth: '800px', background: 'rgba(30, 41, 59, 0.5)', border: '1px solid #334155', borderRadius: '16px', padding: '1.5rem' }}>
           <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#e2e8f0' }}>
             <Play size={24} color="#f43f5e"/> Global Video Configuration
           </h2>
-          <p style={{ color: '#94a3b8', marginBottom: '1rem' }}>Enter a YouTube Video ID or full YouTube URL to update the video for all users globally.</p>
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <input 
-              className="input-field" 
-              value={videoId} 
-              onChange={e => {
-                const val = e.target.value;
-                const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-                const match = val.match(regExp);
-                const parsedId = (match && match[2].length === 11) ? match[2] : val;
-                setVideoId(parsedId);
-              }}
-              placeholder="e.g. https://www.youtube.com/watch?v=8KCuHHeC_M0 or 8KCuHHeC_M0"
-              style={{ flex: 1, margin: 0 }}
-            />
-            <button onClick={updateVideoId} className="btn btn-primary" style={{ background: '#f43f5e', border: 'none' }}>Update Global Video</button>
+          <p style={{ color: '#94a3b8', marginBottom: '1.25rem' }}>Enter a YouTube Video ID or full YouTube URL to update the video for all users globally.</p>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+            <div className="form-group-aspire" style={{ flex: 1, margin: 0 }}>
+              <div className="input-wrapper-aspire">
+                <Play className="input-icon-aspire" size={16} />
+                <input 
+                  className="input-aspire" 
+                  value={videoId} 
+                  onChange={e => {
+                    const val = e.target.value;
+                    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+                    const match = val.match(regExp);
+                    const parsedId = (match && match[2].length === 11) ? match[2] : val;
+                    setVideoId(parsedId);
+                  }}
+                  placeholder="e.g. https://www.youtube.com/watch?v=8KCuHHeC_M0 or 8KCuHHeC_M0"
+                  style={{ margin: 0 }}
+                />
+              </div>
+            </div>
+            <button onClick={updateVideoId} className="btn-aspire-primary" style={{ background: '#f43f5e', border: 'none', height: '42px', padding: '0 1.5rem', borderRadius: '8px' }}>Update Video</button>
           </div>
-          {videoConfigMsg && <div style={{ marginTop: '1rem', color: '#34d399' }}>{videoConfigMsg}</div>}
+          {videoConfigMsg && <div style={{ marginTop: '1rem', color: '#34d399', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><CheckCircle size={16}/> {videoConfigMsg}</div>}
           
           {/* YouTube Preview */}
           {videoId && (
             <div style={{ marginTop: '1.5rem', borderRadius: '12px', overflow: 'hidden', border: '1px solid #334155' }}>
               <iframe 
                 width="100%" 
-                height="200" 
+                height="240" 
                 src={`https://www.youtube.com/embed/${videoId}?controls=1`} 
                 title="YouTube Preview"
                 frameBorder="0" 
@@ -213,32 +233,35 @@ export default function AdminDashboard({ onLogout }) {
         </div>
 
         {/* User Progress Table */}
-        <div className="glass-sidebar-card">
+        <div className="glass-sidebar-card" style={{ background: 'rgba(30, 41, 59, 0.5)', border: '1px solid #334155', borderRadius: '16px', padding: '1.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <h2 style={{ color: '#e2e8f0' }}>User Watch Progress</h2>
-            <button onClick={() => fetchData()} className="btn btn-outline" disabled={loading}>
-              <RefreshCw size={18} className={loading ? 'spin' : ''} /> Refresh Data
+            <h2 style={{ color: '#e2e8f0', margin: 0 }}>User Watch Progress</h2>
+            <button onClick={() => fetchData()} className="btn-logout-aspire" disabled={loading} style={{ background: 'rgba(255,255,255,0.05)', color: '#e2e8f0', border: '1px solid #334155', padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderRadius: '6px' }}>
+              <RefreshCw size={16} className={loading ? 'spin' : ''} /> Refresh Data
             </button>
           </div>
 
           {/* Filters */}
           <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-            <div className="input-group" style={{ flex: 1, margin: 0, position: 'relative' }}>
-              <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-              <input 
-                className="input-field" 
-                placeholder="Search by name or ID..." 
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                style={{ paddingLeft: '40px', margin: 0 }}
-              />
+            <div className="form-group-aspire" style={{ flex: 1, margin: 0 }}>
+              <div className="input-wrapper-aspire">
+                <Search className="input-icon-aspire" size={16} />
+                <input 
+                  className="input-aspire" 
+                  placeholder="Search by name or ID..." 
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                />
+              </div>
             </div>
-            <div className="input-group" style={{ width: '200px', margin: 0 }}>
-              <select className="input-field" value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ margin: 0 }}>
-                <option value="ALL">All Statuses</option>
-                <option value="COMPLETED">Completed</option>
-                <option value="IN_PROGRESS">In Progress</option>
-              </select>
+            <div className="form-group-aspire" style={{ width: '200px', margin: 0 }}>
+              <div className="input-wrapper-aspire" style={{ padding: 0 }}>
+                <select className="input-aspire" value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ paddingLeft: '1rem', appearance: 'none' }}>
+                  <option value="ALL">All Statuses</option>
+                  <option value="COMPLETED">Completed</option>
+                  <option value="IN_PROGRESS">In Progress</option>
+                </select>
+              </div>
             </div>
           </div>
 
