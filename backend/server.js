@@ -258,13 +258,13 @@ router.post('/progress/:userId', async (req, res) => {
 });
 
 // 4. DYNAMIC VIDEO CONFIGURATION & PROXY ENDPOINTS
-let currentVideoUrl = 'https://media.w3.org/2010/05/sintel/trailer_hd.mp4';
+let currentVideoUrl = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4';
 
 router.get('/video-config', (req, res) => {
   return res.json({
     success: true,
     videoUrl: currentVideoUrl,
-    title: 'AspireNext Ultra HD 12-Minute Masterclass'
+    title: 'Course Demo Video'
   });
 });
 

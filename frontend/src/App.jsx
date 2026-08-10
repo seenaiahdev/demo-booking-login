@@ -98,7 +98,7 @@ export default function App() {
 
   const handleVideoCompleted = () => {
     if (currentUser?.id) {
-      syncProgressWithBackend(currentUser.id, savedProgress.currentTime || 0, true);
+      syncProgressWithBackend(currentUser, savedProgress.currentTime || 0, true);
     }
     const updatedUser = { ...currentUser, completed: true };
     setCurrentUser(updatedUser);
@@ -132,16 +132,10 @@ export default function App() {
             <div className="dashboard-grid-layout">
               {/* Main Video Theater Section */}
               <div className="theater-main-column">
-                <div className="dashboard-title-box">
-                  <div className="badge-pill-cyan">
-                    <PlayCircle size={14} /> AspireNext Ultra HD Module
-                  </div>
-                  <h1 className="dashboard-main-heading">
-                    Interactive Video Training Session
+                <div className="dashboard-title-box" style={{ marginBottom: '1rem' }}>
+                  <h1 className="dashboard-main-heading" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <PlayCircle size={26} color="#38bdf8" /> Course Demo Video
                   </h1>
-                  <p className="dashboard-subheading">
-                    Experience state-of-the-art tech education. Your session watch history is automatically recorded in real time.
-                  </p>
                 </div>
 
                 <VideoPlayer

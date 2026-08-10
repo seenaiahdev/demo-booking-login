@@ -1,150 +1,240 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, CheckCircle, Sparkles } from 'lucide-react';
 import { syncProgressWithBackend } from '../utils/storage';
 
+// Default YouTube video ID: "Learn Python in 45 Minutes" by Edureka (~45 min)
+const DEFAULT_YT_VIDEO_ID = '8KCuHHeC_M0';
+
 export default function VideoPlayer({ user, savedProgress, onComplete, onDurationChange }) {
-  const videoRef = useRef(null);
   const containerRef = useRef(null);
+  const playerRef = useRef(null);
+  const ytContainerRef = useRef(null);
   const lastSavedSecondRef = useRef(-1);
+  const progressIntervalRef = useRef(null);
+  const apiReadyRef = useRef(false);
+  const hasResumedRef = useRef(false);
+  const savedProgressRef = useRef(savedProgress);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const [duration, setDuration] = useState(2700);
   const [maxWatchedTime, setMaxWatchedTime] = useState(0);
-  const [volume, setVolume] = useState(1);
+  const [volume, setVolume] = useState(100);
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [showControlsOverlay, setShowControlsOverlay] = useState(true);
+  const [playerReady, setPlayerReady] = useState(false);
 
-  const [activeVideoSrc, setActiveVideoSrc] = useState('https://media.w3.org/2010/05/sintel/trailer_hd.mp4');
-
-  const fallbackSources = [
-    'https://www.w3schools.com/html/mov_bbb.mp4',
-    'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4'
-  ];
-  const [fallbackIndex, setFallbackIndex] = useState(-1);
-
-
-
-  const currentVideoSource = fallbackIndex >= 0 ? fallbackSources[fallbackIndex] : activeVideoSrc;
-
-  // Restore saved progress on mount
+  // Keep savedProgressRef in sync
   useEffect(() => {
+    savedProgressRef.current = savedProgress;
+  }, [savedProgress]);
+
+  // When savedProgress arrives from Supabase, restore state and seek YouTube player
+  useEffect(() => {
+    if (savedProgress && savedProgress.currentTime > 0) {
+      setCurrentTime(savedProgress.currentTime);
+      setMaxWatchedTime(savedProgress.currentTime);
+      setIsCompleted(!!savedProgress.completed);
+
+      // If player is already ready, seek to saved position
+      if (playerRef.current && playerRef.current.seekTo && !hasResumedRef.current) {
+        hasResumedRef.current = true;
+        playerRef.current.seekTo(savedProgress.currentTime, true);
+      }
+    }
     if (savedProgress) {
-      const initialTime = savedProgress.currentTime || 0;
-      setCurrentTime(initialTime);
-      setMaxWatchedTime(initialTime);
       setIsCompleted(!!savedProgress.completed);
     }
   }, [savedProgress]);
 
-  // Set start position when video metadata loads
-  const handleLoadedMetadata = () => {
-    if (videoRef.current) {
-      const videoDuration = videoRef.current.duration;
-      setDuration(videoDuration);
-      if (onDurationChange) onDurationChange(videoDuration);
+  // Load YouTube IFrame API script
+  useEffect(() => {
+    if (window.YT && window.YT.Player) {
+      apiReadyRef.current = true;
+      initPlayer();
+      return;
+    }
 
-      const startTime = savedProgress?.currentTime || 0;
-      if (startTime > 0 && startTime < videoDuration) {
-        videoRef.current.currentTime = startTime;
-        setCurrentTime(startTime);
-        setMaxWatchedTime(startTime);
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    window.onYouTubeIframeAPIReady = () => {
+      apiReadyRef.current = true;
+      initPlayer();
+    };
+
+    return () => {
+      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+      if (playerRef.current && playerRef.current.destroy) {
+        try { playerRef.current.destroy(); } catch (e) { /* ignore */ }
+      }
+    };
+  }, []);
+
+  const initPlayer = useCallback(() => {
+    if (!apiReadyRef.current || !ytContainerRef.current) return;
+    if (playerRef.current) return;
+
+    // Read the latest savedProgress from ref (may have been fetched by now)
+    const resumeTime = savedProgressRef.current?.currentTime || 0;
+
+    playerRef.current = new window.YT.Player(ytContainerRef.current, {
+      videoId: DEFAULT_YT_VIDEO_ID,
+      playerVars: {
+        autoplay: 0,
+        controls: 0,
+        disablekb: 1,
+        fs: 0,
+        iv_load_policy: 3,
+        modestbranding: 1,
+        rel: 0,
+        showinfo: 0,
+        start: Math.floor(resumeTime),
+        playsinline: 1,
+        origin: window.location.origin
+      },
+      events: {
+        onReady: (event) => {
+          const player = event.target;
+          const ytDuration = player.getDuration();
+          if (ytDuration > 0) {
+            setDuration(ytDuration);
+            if (onDurationChange) onDurationChange(ytDuration);
+          }
+
+          // Resume from saved position (use latest ref value)
+          const latestResumeTime = savedProgressRef.current?.currentTime || 0;
+          if (latestResumeTime > 0) {
+            player.seekTo(latestResumeTime, true);
+            setCurrentTime(latestResumeTime);
+            setMaxWatchedTime(latestResumeTime);
+            hasResumedRef.current = true;
+          }
+
+          setPlayerReady(true);
+        },
+        onStateChange: (event) => {
+          const state = event.data;
+          if (state === window.YT.PlayerState.PLAYING) {
+            setIsPlaying(true);
+            startProgressTracking();
+          } else if (state === window.YT.PlayerState.PAUSED) {
+            setIsPlaying(false);
+            stopProgressTracking();
+            if (user?.id && playerRef.current) {
+              const time = playerRef.current.getCurrentTime();
+              syncProgressWithBackend(user, time, isCompleted);
+            }
+          } else if (state === window.YT.PlayerState.ENDED) {
+            setIsPlaying(false);
+            setIsCompleted(true);
+            stopProgressTracking();
+            if (user?.id) {
+              syncProgressWithBackend(user, duration, true);
+            }
+            if (onComplete) onComplete();
+          }
+        }
+      }
+    });
+  }, [user, onDurationChange, onComplete, duration, isCompleted]);
+
+  // Re-init player when YT container is available
+  useEffect(() => {
+    if (apiReadyRef.current && ytContainerRef.current && !playerRef.current) {
+      initPlayer();
+    }
+  }, [initPlayer]);
+
+  // Progress tracking interval
+  const startProgressTracking = () => {
+    stopProgressTracking();
+    progressIntervalRef.current = setInterval(() => {
+      if (!playerRef.current || !playerRef.current.getCurrentTime) return;
+
+      const actualTime = playerRef.current.getCurrentTime();
+      const currentSecond = Math.floor(actualTime);
+
+      setCurrentTime(actualTime);
+
+      // Anti-cheat: prevent skipping ahead
+      setMaxWatchedTime(prev => {
+        if (actualTime > prev + 3) {
+          playerRef.current.seekTo(prev, true);
+          setCurrentTime(prev);
+          return prev;
+        }
+        return Math.max(prev, actualTime);
+      });
+
+      // Save progress to Supabase on every new integer second
+      if (user?.id && currentSecond !== lastSavedSecondRef.current) {
+        lastSavedSecondRef.current = currentSecond;
+        syncProgressWithBackend(user, actualTime, false);
+      }
+    }, 500);
+  };
+
+  const stopProgressTracking = () => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+  };
+
+  // Cleanup on unmount — save final progress
+  useEffect(() => {
+    return () => {
+      stopProgressTracking();
+      if (user?.id && playerRef.current && playerRef.current.getCurrentTime) {
+        try {
+          syncProgressWithBackend(user, playerRef.current.getCurrentTime(), isCompleted);
+        } catch (e) { /* ignore */ }
+      }
+    };
+  }, [user, isCompleted]);
+
+  // Player Control Actions
+  const togglePlay = () => {
+    if (!playerRef.current || !playerReady) return;
+    if (isPlaying) {
+      playerRef.current.pauseVideo();
+    } else {
+      playerRef.current.playVideo();
+    }
+  };
+
+  const toggleMute = () => {
+    if (!playerRef.current || !playerReady) return;
+    if (isMuted) {
+      playerRef.current.unMute();
+      playerRef.current.setVolume(volume);
+      setIsMuted(false);
+    } else {
+      playerRef.current.mute();
+      setIsMuted(true);
+    }
+  };
+
+  const handleVolumeChange = (e) => {
+    const newVol = parseInt(e.target.value);
+    setVolume(newVol);
+    if (playerRef.current && playerReady) {
+      playerRef.current.setVolume(newVol);
+      if (newVol === 0) {
+        playerRef.current.mute();
+        setIsMuted(true);
+      } else {
+        playerRef.current.unMute();
+        setIsMuted(false);
       }
     }
   };
 
-  // Real-time time update & strict second-by-second Supabase progress sync
-  const handleTimeUpdate = () => {
-    if (!videoRef.current) return;
-    const actualTime = videoRef.current.currentTime;
-    const currentSecond = Math.floor(actualTime);
-
-    if (!isCompleted && actualTime > maxWatchedTime + 1.5) {
-      videoRef.current.currentTime = maxWatchedTime;
-      setCurrentTime(maxWatchedTime);
-      return;
-    }
-
-    if (actualTime > maxWatchedTime) {
-      setMaxWatchedTime(actualTime);
-    }
-
-    setCurrentTime(actualTime);
-
-    // Save progress to Supabase backend on every new integer second (1s, 2s, 3s... 9s)
-    if (user?.id && currentSecond !== lastSavedSecondRef.current) {
-      lastSavedSecondRef.current = currentSecond;
-      syncProgressWithBackend(user.id, actualTime, isCompleted);
-    }
-  };
-
-  // Automatic Failover if a video URL fails to load
-  const handleVideoError = () => {
-    console.warn(`Video source ${currentVideoSource} notice. Failing over...`);
-    if (fallbackIndex < fallbackSources.length - 1) {
-      setFallbackIndex(prev => prev + 1);
-    }
-  };
-
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.pause();
-      videoRef.current.load();
-      setIsPlaying(false);
-      setDuration(0);
-    }
-  }, [currentVideoSource]);
-
-  // Completion Handler -> Triggers Success View Navigation & 100% Supabase save
-  const handleEnded = () => {
-    setIsPlaying(false);
-    setIsCompleted(true);
-    if (user?.id) {
-      syncProgressWithBackend(user.id, duration, true);
-    }
-    if (onComplete) {
-      onComplete();
-    }
-  };
-
-  // Player Control Actions
-  const togglePlay = () => {
-    if (!videoRef.current) return;
-    if (isPlaying) {
-      videoRef.current.pause();
-      setIsPlaying(false);
-      if (user?.id) syncProgressWithBackend(user.id, videoRef.current.currentTime, isCompleted);
-    } else {
-      videoRef.current.play().then(() => {
-        setIsPlaying(true);
-      }).catch((err) => {
-        console.warn('Playback error:', err);
-        handleVideoError();
-      });
-    }
-  };
-
-  // Volume Controls
-  const toggleMute = () => {
-    if (!videoRef.current) return;
-    const nextMute = !isMuted;
-    videoRef.current.muted = nextMute;
-    setIsMuted(nextMute);
-  };
-
-  const handleVolumeChange = (e) => {
-    const newVol = parseFloat(e.target.value);
-    setVolume(newVol);
-    if (videoRef.current) {
-      videoRef.current.volume = newVol;
-      videoRef.current.muted = newVol === 0;
-      setIsMuted(newVol === 0);
-    }
-  };
-
-  // Fullscreen Toggle
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
     if (!document.fullscreenElement) {
@@ -156,8 +246,12 @@ export default function VideoPlayer({ user, savedProgress, onComplete, onDuratio
 
   const formatTime = (secs) => {
     if (isNaN(secs)) return '00:00';
-    const m = Math.floor(secs / 60);
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
     const s = Math.floor(secs % 60);
+    if (h > 0) {
+      return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
@@ -165,7 +259,6 @@ export default function VideoPlayer({ user, savedProgress, onComplete, onDuratio
 
   return (
     <div className="premium-theater-wrapper">
-      {/* Ambient Theater Backglow Effect */}
       <div className="ambient-theater-glow" />
 
       <div
@@ -175,32 +268,42 @@ export default function VideoPlayer({ user, savedProgress, onComplete, onDuratio
         onMouseLeave={() => isPlaying && setShowControlsOverlay(false)}
       >
         <div className="yt-video-wrapper" onClick={togglePlay}>
-          <video
-            ref={videoRef}
-            className="yt-video-element"
-            src={currentVideoSource}
-            controls={false}
-            preload="auto"
-            onLoadedMetadata={handleLoadedMetadata}
-            onTimeUpdate={handleTimeUpdate}
-            onEnded={handleEnded}
-            onError={handleVideoError}
-            playsInline
+          <div
+            ref={ytContainerRef}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              pointerEvents: 'none'
+            }}
           />
 
-          {/* Big Central Play Overlay Button when Paused */}
-          {!isPlaying && (
+          {!isPlaying && playerReady && (
             <div className="yt-big-play-overlay">
               <div className="yt-play-icon-circle-glow">
                 <Play size={40} fill="white" style={{ marginLeft: '4px' }} />
               </div>
             </div>
           )}
+
+          {!playerReady && (
+            <div className="yt-big-play-overlay" style={{ cursor: 'default' }}>
+              <div style={{
+                color: '#38bdf8',
+                fontSize: '1rem',
+                fontWeight: 700,
+                textAlign: 'center',
+                animation: 'pulse 1.5s ease-in-out infinite'
+              }}>
+                Loading Course Video...
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Integrated Bottom Controls Bar */}
         <div className={`yt-controls-bar ${showControlsOverlay ? 'visible' : ''}`}>
-          {/* COMPLETELY LOCKED PROGRESS BAR (NON-CLICKABLE / NO POINTER EVENTS) */}
           <div
             className="yt-progress-container-locked"
             style={{ pointerEvents: 'none', cursor: 'not-allowed' }}
@@ -212,12 +315,10 @@ export default function VideoPlayer({ user, savedProgress, onComplete, onDuratio
 
           <div className="yt-controls-main">
             <div className="yt-controls-left">
-              {/* Play / Pause Toggle Button */}
               <button className="yt-icon-btn" onClick={togglePlay} title={isPlaying ? 'Pause (k)' : 'Play (k)'}>
                 {isPlaying ? <Pause size={20} fill="white" /> : <Play size={20} fill="white" />}
               </button>
 
-              {/* Volume Control Group */}
               <div className="yt-volume-group">
                 <button className="yt-icon-btn" onClick={toggleMute} title={isMuted ? 'Unmute' : 'Mute'}>
                   {isMuted || volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
@@ -225,15 +326,14 @@ export default function VideoPlayer({ user, savedProgress, onComplete, onDuratio
                 <input
                   type="range"
                   min="0"
-                  max="1"
-                  step="0.05"
+                  max="100"
+                  step="5"
                   value={isMuted ? 0 : volume}
                   onChange={handleVolumeChange}
                   className="yt-volume-slider"
                 />
               </div>
 
-              {/* Timings Display */}
               <div className="yt-time-display">
                 {formatTime(currentTime)} / {formatTime(duration)}
               </div>
@@ -246,7 +346,7 @@ export default function VideoPlayer({ user, savedProgress, onComplete, onDuratio
                 </span>
               )}
               <span className="yt-hd-badge">
-                <Sparkles size={12} /> 1080p Ultra HD
+                <Sparkles size={12} /> YouTube HD
               </span>
               <button className="yt-icon-btn" onClick={toggleFullscreen} title="Fullscreen (f)">
                 {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}

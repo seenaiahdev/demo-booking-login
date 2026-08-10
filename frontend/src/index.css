@@ -978,3 +978,8 @@ body {
     padding: 0.2rem 0.4rem;
   }
 }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
