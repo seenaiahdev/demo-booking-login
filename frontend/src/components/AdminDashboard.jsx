@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import ReactPlayer from 'react-player/lazy';
 import { ShieldCheck, LogOut, RefreshCw, Search, Filter, Play, CheckCircle, Clock, Download, ArrowUp, ArrowDown, Users, TrendingUp } from 'lucide-react';
+import ThreeBackground from './ThreeBackground';
+import logoImg from '../assests/Logo_f8hqc0.jpg';
 import '../index.css';
 
 export default function AdminDashboard({ onLogout }) {
@@ -196,10 +198,11 @@ export default function AdminDashboard({ onLogout }) {
   if (!isAuthenticated) {
     return (
       <div className="login-page-3d-wrapper">
+        <ThreeBackground />
         <div className="glass-login-card-3d">
           <div className="card-brand-header" style={{ justifyContent: 'center', marginBottom: '1.25rem' }}>
-            <div className="brand-logo-badge" style={{ backgroundColor: '#f43f5e', padding: '12px', borderRadius: '50%' }}>
-              <ShieldCheck size={36} color="white" />
+            <div className="brand-logo-badge">
+              <img src={logoImg} alt="Aspire Logo" className="logo-badge-img" style={{ height: '48px' }} />
             </div>
           </div>
           <div className="form-header">
@@ -234,7 +237,7 @@ export default function AdminDashboard({ onLogout }) {
               </div>
             </div>
             
-            <button type="submit" className="btn-aspire-primary" style={{ width: '100%', background: '#f43f5e', border: 'none', color: 'white', display: 'flex', justifyContent: 'center' }}>
+            <button type="submit" className="btn-aspire-primary" style={{ width: '100%', justifyContent: 'center' }}>
               Authenticate
             </button>
           </form>
@@ -250,10 +253,10 @@ export default function AdminDashboard({ onLogout }) {
     <div className="app-container" style={{ minHeight: '100vh', background: '#0f172a' }}>
       <nav className="top-nav" style={{ padding: '1rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1e293b' }}>
         <div className="nav-logo" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#e2e8f0', fontWeight: 'bold', fontSize: '1.25rem' }}>
-          <div style={{ backgroundColor: '#f43f5e', padding: '8px', borderRadius: '8px', display: 'flex' }}><ShieldCheck size={20} color="white" /></div>
+          <img src={logoImg} alt="Aspire Logo" style={{ height: '36px', borderRadius: '6px' }} />
           <span>AspireNext Admin</span>
         </div>
-        <button onClick={onLogout} className="btn-logout-aspire" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(244, 63, 94, 0.1)', color: '#f43f5e', border: '1px solid rgba(244, 63, 94, 0.2)', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer' }}>
+        <button onClick={onLogout} className="btn-logout-aspire" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(37, 99, 235, 0.1)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.2)', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer' }}>
           <LogOut size={18} /> Exit Admin
         </button>
       </nav>
@@ -262,7 +265,7 @@ export default function AdminDashboard({ onLogout }) {
         {/* Video Configuration Section */}
         <div className="glass-sidebar-card" style={{ marginBottom: '2rem', maxWidth: '800px', background: 'rgba(30, 41, 59, 0.5)', border: '1px solid #334155', borderRadius: '16px', padding: '1.5rem' }}>
           <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#e2e8f0' }}>
-            <Play size={24} color="#f43f5e"/> Global Video Configuration
+            <Play size={24} color="#38bdf8"/> Global Video Configuration
           </h2>
           <p style={{ color: '#94a3b8', marginBottom: '1.25rem' }}>Enter a YouTube Video ID or full YouTube URL to update the video for all users globally.</p>
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
@@ -285,7 +288,7 @@ export default function AdminDashboard({ onLogout }) {
                 />
               </div>
             </div>
-            <button onClick={updateVideoId} className="btn-aspire-primary" style={{ background: '#f43f5e', border: 'none', height: '42px', padding: '0 1.5rem', borderRadius: '8px', whiteSpace: 'nowrap', width: 'auto' }}>Update Config</button>
+            <button onClick={updateVideoId} className="btn-aspire-primary" style={{ height: '42px', padding: '0 1.5rem', borderRadius: '8px', whiteSpace: 'nowrap', width: 'auto' }}>Update Config</button>
           </div>
           {videoConfigMsg && <div style={{ marginTop: '1rem', color: '#34d399', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><CheckCircle size={16}/> {videoConfigMsg}</div>}
           
@@ -354,8 +357,8 @@ export default function AdminDashboard({ onLogout }) {
               <div style={{ color: '#f8fafc', fontSize: '1.5rem', fontWeight: 'bold' }}>{completedStudents}</div>
             </div>
           </div>
-          <div className="glass-sidebar-card" style={{ padding: '1.5rem', borderRadius: '16px', background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.6))', border: '1px solid rgba(244, 63, 94, 0.2)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ padding: '12px', background: 'rgba(244, 63, 94, 0.1)', borderRadius: '12px' }}><TrendingUp size={24} color="#f43f5e" /></div>
+          <div className="glass-sidebar-card" style={{ padding: '1.5rem', borderRadius: '16px', background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.6))', border: '1px solid rgba(6, 182, 212, 0.2)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ padding: '12px', background: 'rgba(6, 182, 212, 0.1)', borderRadius: '12px' }}><TrendingUp size={24} color="#06b6d4" /></div>
             <div>
               <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Completion Rate</div>
               <div style={{ color: '#f8fafc', fontSize: '1.5rem', fontWeight: 'bold' }}>{completionRate}%</div>
@@ -453,7 +456,7 @@ export default function AdminDashboard({ onLogout }) {
                       <button 
                         onClick={() => resetProgress(user)}
                         className="btn btn-outline" 
-                        style={{ fontSize: '0.875rem', padding: '0.25rem 0.75rem', borderColor: '#f43f5e', color: '#f43f5e' }}
+                        style={{ fontSize: '0.875rem', padding: '0.25rem 0.75rem', borderColor: 'rgba(239, 68, 68, 0.4)', color: '#f87171' }}
                       >
                         Reset
                       </button>
