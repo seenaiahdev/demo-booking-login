@@ -61,9 +61,7 @@ export default function LoginPage({ onLoginSuccess }) {
       <div className="glass-login-card-3d">
         {/* Header containing logo icon */}
         <div className="card-brand-header" style={{ justifyContent: 'center', marginBottom: '1.25rem' }}>
-          <div className="brand-logo-badge">
-            <img src={logoImg} alt="Logo" className="logo-badge-img" style={{ height: '44px' }} />
-          </div>
+          <img src={logoImg} alt="Aspire Logo" style={{ height: '52px', width: 'auto', objectFit: 'contain' }} />
         </div>
 
         <div className="form-header">

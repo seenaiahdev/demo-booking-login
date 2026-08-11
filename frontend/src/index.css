@@ -1,15 +1,15 @@
 /* Purpose: Global stylesheet defining the ultra-modern AspireNext design system, WebGL 3D login styling, ambient video glow, dedicated success certificate page, and logout security styling. */
 
 :root {
-  --aspire-navy: #0f172a;
-  --aspire-blue-dark: #1e3a8a;
-  --aspire-blue-primary: #2563eb;
-  --aspire-blue-hover: #1d4ed8;
-  --aspire-blue-light: #eff6ff;
-  --aspire-accent-cyan: #06b6d4;
-  --aspire-text-dark: #1e293b;
+  --aspire-navy: #1b2a4a;
+  --aspire-blue-dark: #2554a3;
+  --aspire-blue-primary: #3b5998;
+  --aspire-blue-hover: #2d4578;
+  --aspire-blue-light: #eef2f6;
+  --aspire-accent-cyan: #3b5998;
+  --aspire-text-dark: #1b2a4a;
   --aspire-text-muted: #64748b;
-  --aspire-border: #e2e8f0;
+  --aspire-border: #b0b5bc;
   --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
@@ -199,7 +199,7 @@ body {
   padding: 0.85rem 1.25rem;
   border: none;
   border-radius: 12px;
-  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+  background: linear-gradient(135deg, var(--aspire-blue-dark) 0%, var(--aspire-blue-primary) 100%);
   color: #ffffff;
   font-size: 0.95rem;
   font-weight: 700;
@@ -1019,8 +1019,74 @@ body {
   border-radius: 50%;
 }
 input:checked + .toggle-slider {
-  background-color: #f43f5e;
+  background-color: #2563eb;
+  box-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
 }
 input:checked + .toggle-slider:before {
   transform: translateX(20px);
+}
+
+/* Modern Admin Dashboard Additions */
+.admin-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-tab-btn:hover {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+.admin-tab-btn.active {
+  color: #ffffff;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.4), rgba(6, 182, 212, 0.3));
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 0 20px rgba(37, 99, 235, 0.3);
+}
+
+.admin-card-glass {
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.65), rgba(15, 23, 42, 0.85));
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 2rem;
+  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.5), 0 0 30px rgba(37, 99, 235, 0.08);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.admin-card-glass:hover {
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+.admin-platform-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-platform-chip:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: rgba(56, 189, 248, 0.5);
+  transform: translateY(-1px);
 }

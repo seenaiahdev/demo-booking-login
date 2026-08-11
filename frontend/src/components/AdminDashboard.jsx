@@ -1,8 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import ReactPlayer from 'react-player/lazy';
-import { ShieldCheck, LogOut, RefreshCw, Search, Filter, Play, CheckCircle, Clock, Download, ArrowUp, ArrowDown, Users, TrendingUp } from 'lucide-react';
+import { 
+  ShieldCheck, LogOut, RefreshCw, Search, Filter, Play, CheckCircle, 
+  Clock, Download, ArrowUp, ArrowDown, Users, TrendingUp, Sliders, 
+  Video, Monitor, Sparkles, Lock, Volume2, Maximize, AlertOctagon, UserCheck, Layers, Settings
+} from 'lucide-react';
 import ThreeBackground from './ThreeBackground';
 import logoImg from '../assests/Logo_f8hqc0.jpg';
+import { YouTubeSVG } from './AspireLogo';
 import '../index.css';
 
 export default function AdminDashboard({ onLogout }) {
@@ -14,6 +19,7 @@ export default function AdminDashboard({ onLogout }) {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [activeTab, setActiveTab] = useState('VIDEO'); // 'VIDEO', 'STUDENTS'
   
   // Sorting state
   const [sortConfig, setSortConfig] = useState({ key: 'registration_id', direction: 'asc' });
@@ -69,19 +75,14 @@ export default function AdminDashboard({ onLogout }) {
       });
       const data = await res.json();
       if (data.success) {
-        setVideoConfigMsg('Global config updated successfully!');
+        setVideoConfigMsg('Global configuration updated successfully!');
         setTimeout(() => setVideoConfigMsg(''), 3000);
       } else {
-        setVideoConfigMsg('Failed to update.');
+        setVideoConfigMsg('Failed to update configuration.');
       }
     } catch (err) {
-      setVideoConfigMsg('Error updating config.');
+      setVideoConfigMsg('Error connecting to server.');
     }
-  };
-
-  // Toggle handlers for permissions
-  const handleToggle = (key) => {
-    setControls(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
   useEffect(() => {
@@ -114,7 +115,7 @@ export default function AdminDashboard({ onLogout }) {
   };
 
   const resetProgress = async (user) => {
-    if (!window.confirm(`Reset progress for ${user.name}? This cannot be undone.`)) return;
+    if (!window.confirm(`Reset progress for ${user.name}? This action cannot be undone.`)) return;
     try {
       const res = await fetch(`${API_BASE}/admin/reset-progress`, {
         method: 'POST',
@@ -128,7 +129,7 @@ export default function AdminDashboard({ onLogout }) {
       });
       const data = await res.json();
       if (data.success) {
-        fetchData(); // Refresh list
+        fetchData();
       } else {
         alert('Failed to reset progress');
       }
@@ -167,7 +168,6 @@ export default function AdminDashboard({ onLogout }) {
 
   const filteredUsers = useMemo(() => {
     return users.filter(user => {
-      // Exclude internal system config rows
       if (user.user_id === 'SYSTEM_CONFIG' || user.name === 'SYSTEM_CONFIG' || user.registration_id === 'SYSTEM') return false;
 
       const matchesSearch = 
@@ -199,16 +199,16 @@ export default function AdminDashboard({ onLogout }) {
     return (
       <div className="login-page-3d-wrapper">
         <ThreeBackground />
-        <div className="glass-login-card-3d">
-          <div className="card-brand-header" style={{ justifyContent: 'center', marginBottom: '1.25rem' }}>
-            <div className="brand-logo-badge">
-              <img src={logoImg} alt="Aspire Logo" className="logo-badge-img" style={{ height: '48px' }} />
-            </div>
+        <div className="glass-login-card-3d" style={{ maxWidth: '440px' }}>
+          <div className="card-brand-header" style={{ justifyContent: 'center', marginBottom: '1.5rem' }}>
+            <img src={logoImg} alt="Aspire Logo" style={{ height: '56px', width: 'auto', objectFit: 'contain' }} />
           </div>
           <div className="form-header">
-            <h1 className="form-title" style={{ textAlign: 'center' }}>Admin Portal</h1>
+            <h1 className="form-title" style={{ textAlign: 'center', fontSize: '1.8rem', background: 'linear-gradient(135deg, #1e293b, #2563eb)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              Admin Control Portal
+            </h1>
             <p className="form-subtitle" style={{ textAlign: 'center' }}>
-              Enter the master password to proceed
+              Authenticate with master password to access system management
             </p>
           </div>
           
@@ -225,7 +225,7 @@ export default function AdminDashboard({ onLogout }) {
                 Master Password<span>*</span>
               </label>
               <div className="input-wrapper-aspire">
-                <ShieldCheck className="input-icon-aspire" size={16} />
+                <Lock className="input-icon-aspire" size={16} color="#2563eb" />
                 <input 
                   type="password" 
                   value={password} 
@@ -237,12 +237,14 @@ export default function AdminDashboard({ onLogout }) {
               </div>
             </div>
             
-            <button type="submit" className="btn-aspire-primary" style={{ width: '100%', justifyContent: 'center' }}>
-              Authenticate
+            <button type="submit" className="btn-aspire-primary" style={{ width: '100%', justifyContent: 'center', height: '48px', fontSize: '1rem', fontWeight: '700' }}>
+              Authenticate & Enter
             </button>
           </form>
-          <div style={{ textAlign: 'center', marginTop: '20px' }}>
-            <button onClick={onLogout} className="btn-logout-aspire" style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b', fontSize: '0.9rem' }}>Back to User Login</button>
+          <div style={{ textAlign: 'center', marginTop: '1.25rem' }}>
+            <button onClick={onLogout} className="btn-logout-aspire" style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b', fontSize: '0.875rem' }}>
+              ← Back to User Sign In
+            </button>
           </div>
         </div>
       </div>
@@ -250,223 +252,396 @@ export default function AdminDashboard({ onLogout }) {
   }
 
   return (
-    <div className="app-container" style={{ minHeight: '100vh', background: '#0f172a' }}>
-      <nav className="top-nav" style={{ padding: '1rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1e293b' }}>
-        <div className="nav-logo" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#e2e8f0', fontWeight: 'bold', fontSize: '1.25rem' }}>
-          <img src={logoImg} alt="Aspire Logo" style={{ height: '36px', borderRadius: '6px' }} />
-          <span>AspireNext Admin</span>
+    <div className="app-container" style={{ minHeight: '100vh', background: 'radial-gradient(circle at 15% 15%, rgba(37, 99, 235, 0.12) 0%, transparent 40%), radial-gradient(circle at 85% 85%, rgba(6, 182, 212, 0.08) 0%, transparent 40%), #0b0f19' }}>
+      {/* Top Bar Header */}
+      <nav className="top-nav" style={{ padding: '1rem 2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(11, 15, 25, 0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', position: 'sticky', top: 0, zIndex: 100 }}>
+        <div className="nav-logo" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <img src={logoImg} alt="Aspire Logo" style={{ height: '44px', width: 'auto', objectFit: 'contain' }} />
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ color: '#f8fafc', fontWeight: '800', fontSize: '1.25rem', letterSpacing: '-0.02em', background: 'linear-gradient(135deg, #ffffff 30%, #93c5fd 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                AspireNext
+              </span>
+              <span style={{ padding: '2px 8px', borderRadius: '12px', background: 'rgba(37, 99, 235, 0.2)', border: '1px solid rgba(56, 189, 248, 0.3)', color: '#38bdf8', fontSize: '0.7rem', fontWeight: '700', letterSpacing: '0.05em' }}>
+                ADMIN
+              </span>
+            </div>
+          </div>
         </div>
-        <button onClick={onLogout} className="btn-logout-aspire" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(37, 99, 235, 0.1)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.2)', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer' }}>
-          <LogOut size={18} /> Exit Admin
-        </button>
+
+        {/* 2 Clean Dashboard Tab Controls */}
+        <div style={{ display: 'flex', gap: '0.5rem', background: 'rgba(255,255,255,0.03)', padding: '5px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <button 
+            className={`admin-tab-btn ${activeTab === 'VIDEO' ? 'active' : ''}`}
+            onClick={() => setActiveTab('VIDEO')}
+            style={{ padding: '0.65rem 1.5rem', fontSize: '0.9rem' }}
+          >
+            <Video size={16} /> Video Management
+          </button>
+          <button 
+            className={`admin-tab-btn ${activeTab === 'STUDENTS' ? 'active' : ''}`}
+            onClick={() => setActiveTab('STUDENTS')}
+            style={{ padding: '0.65rem 1.5rem', fontSize: '0.9rem' }}
+          >
+            <Users size={16} /> Student Analytics
+          </button>
+        </div>
+
+        {/* Right Action */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.85rem', borderRadius: '20px', background: 'rgba(52, 211, 153, 0.08)', border: '1px solid rgba(52, 211, 153, 0.2)', color: '#34d399', fontSize: '0.75rem', fontWeight: '600' }}>
+            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#34d399', boxShadow: '0 0 8px #34d399' }}></span> System Live
+          </div>
+          <button onClick={onLogout} className="btn-logout-aspire" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(37, 99, 235, 0.12)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '0.55rem 1.2rem', borderRadius: '12px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s ease' }}>
+            <LogOut size={16} /> Exit Admin
+          </button>
+        </div>
       </nav>
 
-      <main className="main-content" style={{ padding: '2rem' }}>
-        {/* Video Configuration Section */}
-        <div className="glass-sidebar-card" style={{ marginBottom: '2rem', maxWidth: '800px', background: 'rgba(30, 41, 59, 0.5)', border: '1px solid #334155', borderRadius: '16px', padding: '1.5rem' }}>
-          <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#e2e8f0' }}>
-            <Play size={24} color="#38bdf8"/> Global Video Configuration
-          </h2>
-          <p style={{ color: '#94a3b8', marginBottom: '1.25rem' }}>Enter a YouTube Video ID or full YouTube URL to update the video for all users globally.</p>
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-            <div className="form-group-aspire" style={{ flex: 1, margin: 0, width: '100%' }}>
-              <div className="input-wrapper-aspire" style={{ width: '100%' }}>
-                <Play className="input-icon-aspire" size={16} />
-                <input 
-                  className="input-aspire" 
-                  value={videoId} 
-                  onChange={e => {
-                    let val = e.target.value.trim();
-                    // If it's exactly 11 characters without slashes/dots, assume it's a raw YouTube ID
-                    if (val.length === 11 && !val.includes('/') && !val.includes('.')) {
-                      val = `https://www.youtube.com/watch?v=${val}`;
-                    }
-                    setVideoId(val);
-                  }}
-                  placeholder="e.g. https://www.youtube.com/watch?v=... or https://.../video.mp4"
-                  style={{ width: '100%', margin: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', color: '#f8fafc', borderColor: '#334155' }}
-                />
-              </div>
+      {/* Main Content Area */}
+      <main className="main-content" style={{ padding: '2.5rem', maxWidth: '1440px', margin: '0 auto', width: '100%' }}>
+        
+        {/* DASHBOARD 1: VIDEO MANAGEMENT DASHBOARD */}
+        {activeTab === 'VIDEO' && (
+          <div>
+            <div style={{ marginBottom: '1.75rem' }}>
+              <h1 style={{ color: '#f8fafc', margin: 0, fontSize: '1.6rem', fontWeight: '800', letterSpacing: '-0.02em' }}>
+                 Video Management Dashboard
+              </h1>
+              <p style={{ color: '#94a3b8', margin: '0.35rem 0 0 0', fontSize: '0.9rem' }}>
+                Control active global video content, set platform links, and configure student anti-cheat restrictions.
+              </p>
             </div>
-            <button onClick={updateVideoId} className="btn-aspire-primary" style={{ height: '42px', padding: '0 1.5rem', borderRadius: '8px', whiteSpace: 'nowrap', width: 'auto' }}>Update Config</button>
-          </div>
-          {videoConfigMsg && <div style={{ marginTop: '1rem', color: '#34d399', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><CheckCircle size={16}/> {videoConfigMsg}</div>}
-          
-          <hr style={{ border: 'none', borderTop: '1px solid #334155', margin: '2rem 0' }} />
 
-          <h3 style={{ color: '#e2e8f0', marginBottom: '1rem', fontSize: '1.1rem' }}>User Playback Permissions</h3>
-          <p style={{ color: '#94a3b8', marginBottom: '1.5rem', fontSize: '0.9rem' }}>Toggle which controls the users are allowed to use during playback.</p>
-          
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(15, 23, 42, 0.4)', padding: '1rem', borderRadius: '8px', border: '1px solid #334155' }}>
-              <span style={{ color: '#e2e8f0' }}>Play/Pause</span>
-              <label className="toggle-switch-aspire">
-                <input type="checkbox" checked={controls.playPause} onChange={e => setControls({...controls, playPause: e.target.checked})} />
-                <span className="toggle-slider"></span>
-              </label>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(15, 23, 42, 0.4)', padding: '1rem', borderRadius: '8px', border: '1px solid #334155' }}>
-              <span style={{ color: '#e2e8f0' }}>Volume Control</span>
-              <label className="toggle-switch-aspire">
-                <input type="checkbox" checked={controls.volume} onChange={e => setControls({...controls, volume: e.target.checked})} />
-                <span className="toggle-slider"></span>
-              </label>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(15, 23, 42, 0.4)', padding: '1rem', borderRadius: '8px', border: '1px solid #334155' }}>
-              <span style={{ color: '#e2e8f0' }}>Fullscreen</span>
-              <label className="toggle-switch-aspire">
-                <input type="checkbox" checked={controls.fullscreen} onChange={e => setControls({...controls, fullscreen: e.target.checked})} />
-                <span className="toggle-slider"></span>
-              </label>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(15, 23, 42, 0.4)', padding: '1rem', borderRadius: '8px', border: '1px solid #334155' }}>
-              <span style={{ color: '#e2e8f0' }}>Allow Skipping (Anti-Cheat)</span>
-              <label className="toggle-switch-aspire">
-                <input type="checkbox" checked={controls.allowSkip} onChange={e => setControls({...controls, allowSkip: e.target.checked})} />
-                <span className="toggle-slider"></span>
-              </label>
-            </div>
-          </div>
-          
-          {/* Video Preview */}
-          {videoId && (
-            <div style={{ marginTop: '2rem', borderRadius: '12px', overflow: 'hidden', border: '1px solid #334155', backgroundColor: '#000' }}>
-              <ReactPlayer 
-                url={videoId} 
-                width="100%" 
-                height="240px" 
-                controls={true} 
-              />
-            </div>
-          )}
-        </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '2rem', alignItems: 'start' }}>
+              
+              {/* Left Column: Video Link Manager & Restrictions */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+                
+                {/* Card A: Video URL Config */}
+                <div className="admin-card-glass">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
+                    <div style={{ padding: '12px', background: 'rgba(37, 99, 235, 0.15)', borderRadius: '14px', border: '1px solid rgba(56, 189, 248, 0.3)', display: 'flex' }}>
+                      <Video size={22} color="#38bdf8"/>
+                    </div>
+                    <div>
+                      <h2 style={{ color: '#f8fafc', margin: 0, fontSize: '1.2rem', fontWeight: '700' }}>Video Link Configuration</h2>
+                      <p style={{ color: '#94a3b8', margin: '0.2rem 0 0 0', fontSize: '0.85rem' }}>Paste any video platform URL or direct media link</p>
+                    </div>
+                  </div>
 
-        {/* Analytics Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-          <div className="glass-sidebar-card" style={{ padding: '1.5rem', borderRadius: '16px', background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.6))', border: '1px solid rgba(56, 189, 248, 0.2)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ padding: '12px', background: 'rgba(56, 189, 248, 0.1)', borderRadius: '12px' }}><Users size={24} color="#38bdf8" /></div>
-            <div>
-              <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Total Students</div>
-              <div style={{ color: '#f8fafc', fontSize: '1.5rem', fontWeight: 'bold' }}>{totalStudents}</div>
-            </div>
-          </div>
-          <div className="glass-sidebar-card" style={{ padding: '1.5rem', borderRadius: '16px', background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.6))', border: '1px solid rgba(52, 211, 153, 0.2)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ padding: '12px', background: 'rgba(52, 211, 153, 0.1)', borderRadius: '12px' }}><CheckCircle size={24} color="#34d399" /></div>
-            <div>
-              <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Completed</div>
-              <div style={{ color: '#f8fafc', fontSize: '1.5rem', fontWeight: 'bold' }}>{completedStudents}</div>
-            </div>
-          </div>
-          <div className="glass-sidebar-card" style={{ padding: '1.5rem', borderRadius: '16px', background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.6))', border: '1px solid rgba(6, 182, 212, 0.2)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ padding: '12px', background: 'rgba(6, 182, 212, 0.1)', borderRadius: '12px' }}><TrendingUp size={24} color="#06b6d4" /></div>
-            <div>
-              <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Completion Rate</div>
-              <div style={{ color: '#f8fafc', fontSize: '1.5rem', fontWeight: 'bold' }}>{completionRate}%</div>
-            </div>
-          </div>
-        </div>
 
-        {/* User Progress Table */}
-        <div className="glass-sidebar-card" style={{ background: 'rgba(30, 41, 59, 0.5)', border: '1px solid #334155', borderRadius: '16px', padding: '1.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-            <h2 style={{ color: '#e2e8f0', margin: 0 }}>User Watch Progress</h2>
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <button onClick={() => fetchData()} className="btn-logout-aspire" disabled={loading} style={{ background: 'rgba(255,255,255,0.05)', color: '#e2e8f0', border: '1px solid #334155', padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderRadius: '6px' }}>
-                <RefreshCw size={16} className={loading ? 'spin' : ''} /> Refresh
-              </button>
-              <button onClick={exportToCSV} className="btn-aspire-primary" style={{ background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.2)', padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderRadius: '6px', height: 'auto', width: 'auto', margin: 0 }}>
-                <Download size={16} /> Export CSV
-              </button>
-            </div>
-          </div>
 
-          {/* Filters */}
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-            <div className="form-group-aspire" style={{ flex: 1, margin: 0 }}>
-              <div className="input-wrapper-aspire">
-                <Search className="input-icon-aspire" size={16} />
-                <input 
-                  className="input-aspire" 
-                  placeholder="Search by name or ID..." 
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)', color: '#f8fafc', borderColor: '#334155' }}
-                />
-              </div>
-            </div>
-            <div className="form-group-aspire" style={{ width: '200px', margin: 0 }}>
-              <div className="input-wrapper-aspire" style={{ padding: 0 }}>
-                <select 
-                  className="input-aspire" 
-                  value={statusFilter} 
-                  onChange={e => setStatusFilter(e.target.value)} 
-                  style={{ paddingLeft: '1rem', appearance: 'none', backgroundColor: 'rgba(15, 23, 42, 0.6)', color: '#f8fafc', borderColor: '#334155' }}
-                >
-                  <option value="ALL">All Statuses</option>
-                  <option value="COMPLETED">Completed</option>
-                  <option value="IN_PROGRESS">In Progress</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', color: '#e2e8f0' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid #334155', color: '#94a3b8' }}>
-                  <th style={{ padding: '1rem 0.5rem', cursor: 'pointer' }} onClick={() => handleSort('registration_id')}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>Registration ID {sortConfig.key === 'registration_id' && (sortConfig.direction === 'asc' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>)}</div>
-                  </th>
-                  <th style={{ padding: '1rem 0.5rem', cursor: 'pointer' }} onClick={() => handleSort('name')}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>Name {sortConfig.key === 'name' && (sortConfig.direction === 'asc' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>)}</div>
-                  </th>
-                  <th style={{ padding: '1rem 0.5rem', cursor: 'pointer' }} onClick={() => handleSort('current_time')}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>Progress {sortConfig.key === 'current_time' && (sortConfig.direction === 'asc' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>)}</div>
-                  </th>
-                  <th style={{ padding: '1rem 0.5rem', cursor: 'pointer' }} onClick={() => handleSort('completed')}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>Status {sortConfig.key === 'completed' && (sortConfig.direction === 'asc' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>)}</div>
-                  </th>
-                  <th style={{ padding: '1rem 0.5rem', textAlign: 'right' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedUsers.length === 0 ? (
-                  <tr><td colSpan="5" style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>No users found</td></tr>
-                ) : sortedUsers.map(user => (
-                  <tr key={user.user_id} style={{ borderBottom: '1px solid #1e293b' }}>
-                    <td style={{ padding: '1rem 0.5rem', fontFamily: 'monospace' }}>{user.registration_id}</td>
-                    <td style={{ padding: '1rem 0.5rem', fontWeight: '500' }}>{user.name}</td>
-                    <td style={{ padding: '1rem 0.5rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Clock size={16} color="#38bdf8"/> {user.watched_timestamp}
+                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                    <div className="form-group-aspire" style={{ flex: 1, margin: 0 }}>
+                      <div className="input-wrapper-aspire" style={{ width: '100%' }}>
+                        <Play className="input-icon-aspire" size={16} color="#38bdf8" />
+                        <input 
+                          className="input-aspire" 
+                          value={videoId} 
+                          onChange={e => setVideoId(e.target.value)}
+                          placeholder="Paste any video URL (YouTube, Vimeo, MP4, etc.)"
+                          style={{ width: '100%', margin: 0, backgroundColor: 'rgba(11, 15, 25, 0.7)', color: '#f8fafc', borderColor: 'rgba(56, 189, 248, 0.25)', paddingLeft: '2.5rem', borderRadius: '12px', fontSize: '0.9rem' }}
+                        />
                       </div>
-                    </td>
-                    <td style={{ padding: '1rem 0.5rem' }}>
-                      {user.completed ? (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: '#34d399', background: 'rgba(52, 211, 153, 0.1)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.875rem' }}>
-                          <CheckCircle size={14} /> Completed
-                        </span>
-                      ) : (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: '#fbbf24', background: 'rgba(251, 191, 36, 0.1)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.875rem' }}>
-                          <Play size={14} /> In Progress
-                        </span>
-                      )}
-                    </td>
-                    <td style={{ padding: '1rem 0.5rem', textAlign: 'right' }}>
-                      <button 
-                        onClick={() => resetProgress(user)}
-                        className="btn btn-outline" 
-                        style={{ fontSize: '0.875rem', padding: '0.25rem 0.75rem', borderColor: 'rgba(239, 68, 68, 0.4)', color: '#f87171' }}
-                      >
-                        Reset
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                    <button onClick={updateVideoId} className="btn-aspire-primary" style={{ height: '46px', padding: '0 1.6rem', borderRadius: '12px', whiteSpace: 'nowrap', width: 'auto', fontWeight: '700', fontSize: '0.9rem' }}>
+                      Update Video
+                    </button>
+                  </div>
+
+                  {videoConfigMsg && (
+                    <div style={{ marginTop: '1rem', color: '#34d399', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: '600', padding: '8px 12px', background: 'rgba(52, 211, 153, 0.1)', borderRadius: '10px', border: '1px solid rgba(52, 211, 153, 0.2)' }}>
+                      <CheckCircle size={16}/> {videoConfigMsg}
+                    </div>
+                  )}
+                </div>
+
+                {/* Card B: Interactive Restrictions & Anti-Cheat */}
+                <div className="admin-card-glass">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
+                    <div style={{ padding: '12px', background: 'rgba(6, 182, 212, 0.15)', borderRadius: '14px', border: '1px solid rgba(6, 182, 212, 0.3)', display: 'flex' }}>
+                      <Sliders size={22} color="#06b6d4"/>
+                    </div>
+                    <div>
+                      <h2 style={{ color: '#f8fafc', margin: 0, fontSize: '1.2rem', fontWeight: '700' }}>Student Playback Restrictions</h2>
+                      <p style={{ color: '#94a3b8', margin: '0.2rem 0 0 0', fontSize: '0.85rem' }}>Toggle permitted user interactive features during playback</p>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
+                    {/* Option 1 */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(11, 15, 25, 0.6)', padding: '1rem 1.1rem', borderRadius: '14px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#e2e8f0', fontSize: '0.875rem', fontWeight: '600' }}>
+                        <Play size={15} color="#38bdf8" /> Play / Pause
+                      </div>
+                      <label className="toggle-switch-aspire">
+                        <input type="checkbox" checked={controls.playPause} onChange={e => setControls({...controls, playPause: e.target.checked})} />
+                        <span className="toggle-slider"></span>
+                      </label>
+                    </div>
+
+                    {/* Option 2 */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(11, 15, 25, 0.6)', padding: '1rem 1.1rem', borderRadius: '14px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#e2e8f0', fontSize: '0.875rem', fontWeight: '600' }}>
+                        <Volume2 size={15} color="#38bdf8" /> Volume
+                      </div>
+                      <label className="toggle-switch-aspire">
+                        <input type="checkbox" checked={controls.volume} onChange={e => setControls({...controls, volume: e.target.checked})} />
+                        <span className="toggle-slider"></span>
+                      </label>
+                    </div>
+
+                    {/* Option 3 */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(11, 15, 25, 0.6)', padding: '1rem 1.1rem', borderRadius: '14px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#e2e8f0', fontSize: '0.875rem', fontWeight: '600' }}>
+                        <Maximize size={15} color="#38bdf8" /> Fullscreen
+                      </div>
+                      <label className="toggle-switch-aspire">
+                        <input type="checkbox" checked={controls.fullscreen} onChange={e => setControls({...controls, fullscreen: e.target.checked})} />
+                        <span className="toggle-slider"></span>
+                      </label>
+                    </div>
+
+                    {/* Option 4 */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(11, 15, 25, 0.6)', padding: '1rem 1.1rem', borderRadius: '14px', border: controls.allowSkip ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(239, 68, 68, 0.3)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: controls.allowSkip ? '#e2e8f0' : '#f87171', fontSize: '0.875rem', fontWeight: '600' }}>
+                        <AlertOctagon size={15} color={controls.allowSkip ? '#38bdf8' : '#f87171'} /> Seek Skip
+                      </div>
+                      <label className="toggle-switch-aspire">
+                        <input type="checkbox" checked={controls.allowSkip} onChange={e => setControls({...controls, allowSkip: e.target.checked})} />
+                        <span className="toggle-slider"></span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {!controls.allowSkip && (
+                    <div style={{ marginTop: '1.2rem', fontSize: '0.8rem', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '8px 14px', background: 'rgba(37, 99, 235, 0.1)', borderRadius: '10px', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
+                      <ShieldCheck size={16} /> Anti-Cheat Seek Lock is ENABLED (Students cannot forward skip)
+                    </div>
+                  )}
+                </div>
+
+              </div>
+
+              {/* Right Column: Clean Monitor Stream Preview */}
+              <div className="admin-card-glass" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ padding: '10px', background: 'rgba(52, 211, 153, 0.15)', borderRadius: '12px', border: '1px solid rgba(52, 211, 153, 0.3)', display: 'flex' }}>
+                      <Monitor size={20} color="#34d399"/>
+                    </div>
+                    <div>
+                      <h2 style={{ color: '#f8fafc', margin: 0, fontSize: '1.15rem', fontWeight: '700' }}>Live Stream Monitor</h2>
+                      <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>Clean live player monitor preview</span>
+                    </div>
+                  </div>
+                  
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '4px 10px', borderRadius: '12px', background: 'rgba(52, 211, 153, 0.1)', border: '1px solid rgba(52, 211, 153, 0.3)', color: '#34d399', fontSize: '0.75rem', fontWeight: '700' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34d399', boxShadow: '0 0 6px #34d399' }}></span> STREAM READY
+                  </span>
+                </div>
+
+                {/* Video URL Display Badge */}
+                <div style={{ marginBottom: '1rem', padding: '10px 14px', background: 'rgba(11, 15, 25, 0.8)', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)', fontFamily: 'monospace', fontSize: '0.8rem', color: '#38bdf8', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                  🔗 Active Stream: {videoId || 'No video loaded'}
+                </div>
+
+                {/* 16:9 Clean Aspect Ratio Player Container */}
+                <div style={{ width: '100%', aspectRatio: '16 / 9', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(56, 189, 248, 0.3)', backgroundColor: '#000', boxShadow: '0 20px 40px rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                  {videoId ? (
+                    <ReactPlayer 
+                      url={videoId} 
+                      width="100%" 
+                      height="100%" 
+                      controls={true} 
+                    />
+                  ) : (
+                    <div style={{ color: '#64748b', fontSize: '0.9rem' }}>Paste a video URL to initiate monitor stream</div>
+                  )}
+                </div>
+              </div>
+
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* DASHBOARD 2: STUDENT ANALYTICS DASHBOARD */}
+        {activeTab === 'STUDENTS' && (
+          <div>
+            <div style={{ marginBottom: '1.75rem' }}>
+              <h1 style={{ color: '#f8fafc', margin: 0, fontSize: '1.6rem', fontWeight: '800', letterSpacing: '-0.02em' }}>
+                📊 Student Analytics & Progress Dashboard
+              </h1>
+              <p style={{ color: '#94a3b8', margin: '0.35rem 0 0 0', fontSize: '0.9rem' }}>
+                Real-time student progress tracking synchronized with Supabase & Google Sheets.
+              </p>
+            </div>
+
+            {/* Top Metric Stats Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+              {/* Metric 1 */}
+              <div className="admin-card-glass" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                <div style={{ padding: '16px', background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(56, 189, 248, 0.1))', borderRadius: '16px', border: '1px solid rgba(56, 189, 248, 0.3)', display: 'flex' }}>
+                  <Users size={28} color="#38bdf8" />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Enrolled</div>
+                  <div style={{ color: '#f8fafc', fontSize: '2rem', fontWeight: '800', marginTop: '2px', lineHeight: 1 }}>{totalStudents}</div>
+                  <div style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '6px' }}>Active video course learners</div>
+                </div>
+              </div>
+
+              {/* Metric 2 */}
+              <div className="admin-card-glass" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                <div style={{ padding: '16px', background: 'linear-gradient(135deg, rgba(52, 211, 153, 0.2), rgba(16, 185, 129, 0.1))', borderRadius: '16px', border: '1px solid rgba(52, 211, 153, 0.3)', display: 'flex' }}>
+                  <CheckCircle size={28} color="#34d399" />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Completed</div>
+                  <div style={{ color: '#f8fafc', fontSize: '2rem', fontWeight: '800', marginTop: '2px', lineHeight: 1 }}>{completedStudents}</div>
+                  <div style={{ color: '#34d399', fontSize: '0.75rem', marginTop: '6px', fontWeight: '600' }}>Finished 100% course video</div>
+                </div>
+              </div>
+
+              {/* Metric 3 */}
+              <div className="admin-card-glass" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                <div style={{ padding: '16px', background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(56, 189, 248, 0.1))', borderRadius: '16px', border: '1px solid rgba(6, 182, 212, 0.3)', display: 'flex' }}>
+                  <TrendingUp size={28} color="#06b6d4" />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Completion Rate</div>
+                  <div style={{ color: '#f8fafc', fontSize: '2rem', fontWeight: '800', marginTop: '2px', lineHeight: 1 }}>{completionRate}%</div>
+                  <div style={{ marginTop: '8px', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden' }}>
+                    <div style={{ width: `${completionRate}%`, height: '100%', background: 'linear-gradient(90deg, #38bdf8, #34d399)', borderRadius: '2px' }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Student Table Glass Card */}
+            <div className="admin-card-glass">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1rem' }}>
+                <div>
+                  <h2 style={{ color: '#f8fafc', margin: 0, fontSize: '1.35rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <UserCheck size={24} color="#38bdf8"/> Student Watch Progress Roster
+                  </h2>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <button onClick={() => fetchData()} className="admin-tab-btn" disabled={loading}>
+                    <RefreshCw size={15} className={loading ? 'spin' : ''} /> Refresh Roster
+                  </button>
+                  <button onClick={exportToCSV} className="btn-aspire-primary" style={{ background: 'rgba(37, 99, 235, 0.2)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.4)', padding: '0.6rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderRadius: '12px', height: 'auto', width: 'auto', margin: 0, fontWeight: '700', cursor: 'pointer' }}>
+                    <Download size={16} /> Export CSV
+                  </button>
+                </div>
+              </div>
+
+              {/* Filter controls */}
+              <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.75rem', flexWrap: 'wrap' }}>
+                <div className="form-group-aspire" style={{ flex: 1, margin: 0, minWidth: '260px' }}>
+                  <div className="input-wrapper-aspire">
+                    <Search className="input-icon-aspire" size={16} color="#38bdf8" />
+                    <input 
+                      className="input-aspire" 
+                      placeholder="Search by student name or registration ID..." 
+                      value={searchTerm}
+                      onChange={e => setSearchTerm(e.target.value)}
+                      style={{ backgroundColor: 'rgba(11, 15, 25, 0.7)', color: '#f8fafc', borderColor: 'rgba(56, 189, 248, 0.2)', paddingLeft: '2.5rem', borderRadius: '12px' }}
+                    />
+                  </div>
+                </div>
+                <div className="form-group-aspire" style={{ width: '200px', margin: 0 }}>
+                  <div className="input-wrapper-aspire" style={{ padding: 0 }}>
+                    <select 
+                      className="input-aspire" 
+                      value={statusFilter} 
+                      onChange={e => setStatusFilter(e.target.value)} 
+                      style={{ paddingLeft: '1rem', appearance: 'none', backgroundColor: 'rgba(11, 15, 25, 0.7)', color: '#f8fafc', borderColor: 'rgba(56, 189, 248, 0.2)', borderRadius: '12px' }}
+                    >
+                      <option value="ALL">All Statuses</option>
+                      <option value="COMPLETED">Completed</option>
+                      <option value="IN_PROGRESS">In Progress</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Table */}
+              <div style={{ overflowX: 'auto', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', color: '#e2e8f0', fontSize: '0.9rem' }}>
+                  <thead>
+                    <tr style={{ background: 'rgba(11, 15, 25, 0.9)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', color: '#94a3b8' }}>
+                      <th style={{ padding: '1.2rem 1.25rem', cursor: 'pointer' }} onClick={() => handleSort('registration_id')}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>Reg ID {sortConfig.key === 'registration_id' && (sortConfig.direction === 'asc' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>)}</div>
+                      </th>
+                      <th style={{ padding: '1.2rem 1.25rem', cursor: 'pointer' }} onClick={() => handleSort('name')}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>Student Name {sortConfig.key === 'name' && (sortConfig.direction === 'asc' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>)}</div>
+                      </th>
+                      <th style={{ padding: '1.2rem 1.25rem', cursor: 'pointer' }} onClick={() => handleSort('current_time')}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>Watch Time {sortConfig.key === 'current_time' && (sortConfig.direction === 'asc' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>)}</div>
+                      </th>
+                      <th style={{ padding: '1.2rem 1.25rem', cursor: 'pointer' }} onClick={() => handleSort('completed')}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>Status {sortConfig.key === 'completed' && (sortConfig.direction === 'asc' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>)}</div>
+                      </th>
+                      <th style={{ padding: '1.2rem 1.25rem', textAlign: 'right' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedUsers.length === 0 ? (
+                      <tr><td colSpan="5" style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>No active student progress records found</td></tr>
+                    ) : sortedUsers.map(user => (
+                      <tr key={user.user_id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)', transition: 'background 0.2s' }}>
+                        <td style={{ padding: '1.1rem 1.25rem' }}>
+                          <span style={{ fontFamily: 'monospace', color: '#38bdf8', background: 'rgba(56, 189, 248, 0.1)', padding: '4px 8px', borderRadius: '6px', border: '1px solid rgba(56, 189, 248, 0.2)', fontSize: '0.85rem' }}>
+                            {user.registration_id}
+                          </span>
+                        </td>
+                        <td style={{ padding: '1.1rem 1.25rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(135deg, #2563eb, #06b6d4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', fontWeight: '700', fontSize: '0.85rem', boxShadow: '0 2px 8px rgba(37,99,235,0.3)' }}>
+                              {(user.name || 'U').charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: '700', color: '#f8fafc' }}>{user.name}</div>
+                              {user.email && <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{user.email}</div>}
+                            </div>
+                          </div>
+                        </td>
+                        <td style={{ padding: '1.1rem 1.25rem' }}>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(56, 189, 248, 0.08)', color: '#38bdf8', padding: '4px 12px', borderRadius: '20px', fontSize: '0.85rem', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
+                            <Clock size={14} color="#38bdf8"/> {user.watched_timestamp}
+                          </div>
+                        </td>
+                        <td style={{ padding: '1.1rem 1.25rem' }}>
+                          {user.completed ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#34d399', background: 'rgba(52, 211, 153, 0.12)', padding: '5px 14px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '700', border: '1px solid rgba(52, 211, 153, 0.3)' }}>
+                              <CheckCircle size={14} /> Completed
+                            </span>
+                          ) : (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#fbbf24', background: 'rgba(251, 191, 36, 0.12)', padding: '5px 14px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '700', border: '1px solid rgba(251, 191, 36, 0.3)' }}>
+                              <Play size={14} /> In Progress
+                            </span>
+                          )}
+                        </td>
+                        <td style={{ padding: '1.1rem 1.25rem', textAlign: 'right' }}>
+                          <button 
+                            onClick={() => resetProgress(user)}
+                            style={{ fontSize: '0.8rem', padding: '0.4rem 0.9rem', color: '#f87171', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.08)', cursor: 'pointer', border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: '600', transition: 'all 0.2s ease' }}
+                          >
+                            Reset
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
       </main>
       
       <style dangerouslySetInnerHTML={{__html: `

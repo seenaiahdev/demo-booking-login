@@ -9,8 +9,9 @@ export default function Header({ user, onLogout }) {
 
   return (
     <header className="header-bar-aspire">
-      <div className="header-brand">
-        <img src={logoImg} alt="Logo" className="header-logo-img" style={{ height: '38px' }} />
+      <div className="header-brand" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <img src={logoImg} alt="Aspire Logo" style={{ height: '38px', width: 'auto', objectFit: 'contain' }} />
+        <span style={{ fontWeight: 800, fontSize: '1.2rem', color: '#1e293b' }}>AspireNext</span>
       </div>
 
       <div className="header-user-section">
