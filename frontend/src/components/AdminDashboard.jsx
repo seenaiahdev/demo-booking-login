@@ -375,7 +375,7 @@ export default function AdminDashboard({ onLogout }) {
 
 
 
-                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                  <div className="admin-input-group" style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                     <div className="form-group-aspire" style={{ flex: 1, margin: 0 }}>
                       <div className="input-wrapper-aspire" style={{ width: '100%' }}>
                         <Play className="input-icon-aspire" size={16} color="#38bdf8" />
@@ -412,7 +412,7 @@ export default function AdminDashboard({ onLogout }) {
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
+                  <div className="admin-toggles-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
                     {/* Option 1 */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(11, 15, 25, 0.6)', padding: '1rem 1.1rem', borderRadius: '14px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#e2e8f0', fontSize: '0.875rem', fontWeight: '600' }}>
