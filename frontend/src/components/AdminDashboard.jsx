@@ -3,7 +3,7 @@ import ReactPlayer from 'react-player/lazy';
 import { 
   ShieldCheck, LogOut, RefreshCw, Search, Filter, Play, CheckCircle, 
   Clock, Download, ArrowUp, ArrowDown, Users, TrendingUp, Sliders, 
-  Video, Monitor, Sparkles, Lock, Volume2, Maximize, AlertOctagon, UserCheck, Layers, Settings
+  Video, Monitor, Sparkles, Lock, Volume2, Maximize, AlertOctagon, UserCheck, Layers, Settings, Eye, EyeOff
 } from 'lucide-react';
 import ThreeBackground from './ThreeBackground';
 import logoImg from '../assests/Logo_f8hqc0.jpg';
@@ -14,6 +14,7 @@ export default function AdminDashboard({ onLogout }) {
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -227,13 +228,32 @@ export default function AdminDashboard({ onLogout }) {
               <div className="input-wrapper-aspire">
                 <Lock className="input-icon-aspire" size={16} color="#2563eb" />
                 <input 
-                  type="password" 
+                  type={showPassword ? 'text' : 'password'}
                   value={password} 
                   onChange={e => setPassword(e.target.value)}
                   placeholder="Enter admin password"
                   className="input-aspire"
+                  style={{ paddingRight: '2.8rem' }}
                   autoFocus
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '0.9rem',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#94a3b8',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '4px'
+                  }}
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
             </div>
             

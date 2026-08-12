@@ -1,7 +1,7 @@
 // Purpose: Clean WebGL portal login page strictly validating authentication against Supabase demo_booking table and displaying explicit account-not-found alert messages.
 
 import React, { useState } from 'react';
-import { Mail, Lock, ArrowRight, AlertCircle, Info } from 'lucide-react';
+import { Mail, Lock, ArrowRight, AlertCircle, Info, Eye, EyeOff } from 'lucide-react';
 import ThreeBackground from './ThreeBackground';
 import logoImg from '../assests/Logo_f8hqc0.jpg';
 
@@ -12,6 +12,7 @@ export default function LoginPage({ onLoginSuccess }) {
   const [error, setError] = useState('');
   const [hasTermsError, setHasTermsError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -108,13 +109,32 @@ export default function LoginPage({ onLoginSuccess }) {
             <div className="input-wrapper-aspire">
               <Lock className="input-icon-aspire" size={16} />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 className="input-aspire"
                 placeholder="Enter password (e.g. rahul@5678)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                style={{ paddingRight: '2.8rem' }}
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '0.9rem',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#94a3b8',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '4px'
+                }}
+                title={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
           </div>
 
