@@ -12,8 +12,8 @@ import { YouTubeSVG } from './AspireLogo';
 import '../index.css';
 
 export default function AdminDashboard({ onLogout }) {
-  const [password, setPassword] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState(() => sessionStorage.getItem('adminPwd') || '');
+  const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('adminAuth') === 'true');
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   
@@ -127,6 +127,8 @@ export default function AdminDashboard({ onLogout }) {
       const data = await res.json();
       if (data.success) {
         setIsAuthenticated(true);
+        sessionStorage.setItem('adminAuth', 'true');
+        sessionStorage.setItem('adminPwd', password);
         setError('');
         fetchData(password);
         fetchVideoConfig();
@@ -219,6 +221,12 @@ export default function AdminDashboard({ onLogout }) {
   const completedStudents = users.filter(u => u.completed).length;
   const completionRate = totalStudents > 0 ? Math.round((completedStudents / totalStudents) * 100) : 0;
 
+  const handleAdminExit = () => {
+    sessionStorage.removeItem('adminAuth');
+    sessionStorage.removeItem('adminPwd');
+    onLogout();
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="login-page-3d-wrapper">
@@ -298,7 +306,7 @@ export default function AdminDashboard({ onLogout }) {
     <div className="app-container" style={{ minHeight: '100vh', background: 'radial-gradient(circle at 15% 15%, rgba(37, 99, 235, 0.12) 0%, transparent 40%), radial-gradient(circle at 85% 85%, rgba(6, 182, 212, 0.08) 0%, transparent 40%), #0b0f19' }}>
       {/* Top Bar Header */}
       <nav className="top-nav" style={{ padding: '1rem 2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(11, 15, 25, 0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', position: 'sticky', top: 0, zIndex: 100 }}>
-        <div className="nav-logo" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div className="nav-logo" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           <img src={logoImg} alt="Aspire Logo" style={{ height: '44px', width: 'auto', objectFit: 'contain' }} />
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -313,7 +321,7 @@ export default function AdminDashboard({ onLogout }) {
         </div>
 
         {/* 2 Clean Dashboard Tab Controls */}
-        <div style={{ display: 'flex', gap: '0.5rem', background: 'rgba(255,255,255,0.03)', padding: '5px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="admin-tabs-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', background: 'rgba(255,255,255,0.03)', padding: '5px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)' }}>
           <button 
             className={`admin-tab-btn ${activeTab === 'VIDEO' ? 'active' : ''}`}
             onClick={() => setActiveTab('VIDEO')}
@@ -335,14 +343,14 @@ export default function AdminDashboard({ onLogout }) {
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.85rem', borderRadius: '20px', background: 'rgba(52, 211, 153, 0.08)', border: '1px solid rgba(52, 211, 153, 0.2)', color: '#34d399', fontSize: '0.75rem', fontWeight: '600' }}>
             <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#34d399', boxShadow: '0 0 8px #34d399' }}></span> System Live
           </div>
-          <button onClick={onLogout} className="btn-logout-aspire" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(37, 99, 235, 0.12)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '0.55rem 1.2rem', borderRadius: '12px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s ease' }}>
+          <button onClick={handleAdminExit} className="btn-logout-aspire" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(37, 99, 235, 0.12)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '0.55rem 1.2rem', borderRadius: '12px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s ease' }}>
             <LogOut size={16} /> Exit Admin
           </button>
         </div>
       </nav>
 
       {/* Main Content Area */}
-      <main className="main-content" style={{ padding: '2.5rem', maxWidth: '1440px', margin: '0 auto', width: '100%' }}>
+      <main className="main-content" style={{ padding: '2.5rem', maxWidth: '1440px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
         
         {/* DASHBOARD 1: VIDEO MANAGEMENT DASHBOARD */}
         {activeTab === 'VIDEO' && (
@@ -383,8 +391,8 @@ export default function AdminDashboard({ onLogout }) {
                           className="input-aspire" 
                           value={videoId} 
                           onChange={e => setVideoId(e.target.value)}
-                          placeholder="Paste any video URL (YouTube, Vimeo, MP4, etc.)"
-                          style={{ width: '100%', margin: 0, backgroundColor: 'rgba(11, 15, 25, 0.7)', color: '#f8fafc', borderColor: 'rgba(56, 189, 248, 0.25)', paddingLeft: '2.5rem', borderRadius: '12px', fontSize: '0.9rem' }}
+                          placeholder="Paste video URL"
+                          style={{ width: '100%', margin: 0, backgroundColor: 'rgba(11, 15, 25, 0.7)', color: '#f8fafc', borderColor: 'rgba(56, 189, 248, 0.25)', paddingLeft: '2.5rem', borderRadius: '12px', fontSize: '0.9rem', minWidth: 0 }}
                         />
                       </div>
                     </div>
