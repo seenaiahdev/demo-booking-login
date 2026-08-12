@@ -248,6 +248,10 @@ body {
   margin-bottom: 0.15rem;
 }
 
+.hover-bg-glass:hover {
+  background: rgba(56, 189, 248, 0.1);
+}
+
 /* Header Bar for AspireNext Dashboard */
 .header-bar-aspire {
   background: #ffffff;

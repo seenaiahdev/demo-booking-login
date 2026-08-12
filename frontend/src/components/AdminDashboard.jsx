@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import ReactPlayer from 'react-player/lazy';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ShieldCheck, LogOut, RefreshCw, Search, Filter, Play, CheckCircle, 
   Clock, Download, ArrowUp, ArrowDown, Users, TrendingUp, Sliders, 
-  Video, Monitor, Sparkles, Lock, Volume2, Maximize, AlertOctagon, UserCheck, Layers, Settings, Eye, EyeOff
+  Video, Monitor, Sparkles, Lock, Volume2, Maximize, AlertOctagon, UserCheck, Layers, Settings, Eye, EyeOff, Columns, ChevronDown
 } from 'lucide-react';
 import ThreeBackground from './ThreeBackground';
 import logoImg from '../assests/Logo_f8hqc0.jpg';
@@ -21,7 +22,29 @@ export default function AdminDashboard({ onLogout }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [activeTab, setActiveTab] = useState('VIDEO'); // 'VIDEO', 'STUDENTS'
+  const allColumns = ['registration_id', 'name', 'current_time', 'completed', 'actions'];
+  const [visibleColumns, setVisibleColumns] = useState(new Set(allColumns));
+  const [isColumnDropdownOpen, setIsColumnDropdownOpen] = useState(false);
   
+  const toggleColumn = (column) => {
+    setVisibleColumns((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(column)) newSet.delete(column);
+      else newSet.add(column);
+      return newSet;
+    });
+  };
+
+  // Data filtering and sorting logic
+  const rowVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: (i) => ({
+      opacity: 1,
+      y: 0,
+      transition: { delay: i * 0.05, duration: 0.3, ease: "easeOut" }
+    }),
+  };
+
   // Sorting state
   const [sortConfig, setSortConfig] = useState({ key: 'registration_id', direction: 'asc' });
 
@@ -586,6 +609,37 @@ export default function AdminDashboard({ onLogout }) {
                     </select>
                   </div>
                 </div>
+                
+                <div style={{ position: 'relative' }}>
+                  <button 
+                    onClick={() => setIsColumnDropdownOpen(!isColumnDropdownOpen)}
+                    className="btn-aspire-primary" 
+                    style={{ background: 'rgba(11, 15, 25, 0.7)', color: '#f8fafc', border: '1px solid rgba(56, 189, 248, 0.2)', padding: '0.6rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderRadius: '12px', height: '46px', margin: 0, fontWeight: '600', cursor: 'pointer' }}
+                  >
+                    <Columns size={16} color="#38bdf8" /> Columns <ChevronDown size={14} />
+                  </button>
+                  {isColumnDropdownOpen && (
+                    <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem', background: 'rgba(11, 15, 25, 0.95)', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '12px', padding: '0.5rem', zIndex: 50, minWidth: '170px', backdropFilter: 'blur(10px)', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)' }}>
+                      {[
+                        { key: 'registration_id', label: 'Reg ID' },
+                        { key: 'name', label: 'Student Name' },
+                        { key: 'current_time', label: 'Watch Time' },
+                        { key: 'completed', label: 'Status' },
+                        { key: 'actions', label: 'Actions' }
+                      ].map(col => (
+                        <label key={col.key} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem', color: '#e2e8f0', cursor: 'pointer', borderRadius: '6px', fontSize: '0.9rem' }} className="admin-tab-btn">
+                          <input 
+                            type="checkbox" 
+                            checked={visibleColumns.has(col.key)} 
+                            onChange={() => toggleColumn(col.key)} 
+                            style={{ accentColor: '#38bdf8', width: '16px', height: '16px' }}
+                          />
+                          {col.label}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Table */}
@@ -593,68 +647,99 @@ export default function AdminDashboard({ onLogout }) {
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', color: '#e2e8f0', fontSize: '0.9rem' }}>
                   <thead>
                     <tr style={{ background: 'rgba(11, 15, 25, 0.9)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', color: '#94a3b8' }}>
-                      <th style={{ padding: '1.2rem 1.25rem', cursor: 'pointer' }} onClick={() => handleSort('registration_id')}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>Reg ID {sortConfig.key === 'registration_id' && (sortConfig.direction === 'asc' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>)}</div>
-                      </th>
-                      <th style={{ padding: '1.2rem 1.25rem', cursor: 'pointer' }} onClick={() => handleSort('name')}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>Student Name {sortConfig.key === 'name' && (sortConfig.direction === 'asc' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>)}</div>
-                      </th>
-                      <th style={{ padding: '1.2rem 1.25rem', cursor: 'pointer' }} onClick={() => handleSort('current_time')}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>Watch Time {sortConfig.key === 'current_time' && (sortConfig.direction === 'asc' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>)}</div>
-                      </th>
-                      <th style={{ padding: '1.2rem 1.25rem', cursor: 'pointer' }} onClick={() => handleSort('completed')}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>Status {sortConfig.key === 'completed' && (sortConfig.direction === 'asc' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>)}</div>
-                      </th>
-                      <th style={{ padding: '1.2rem 1.25rem', textAlign: 'right' }}>Actions</th>
+                      {visibleColumns.has('registration_id') && (
+                        <th style={{ padding: '1.2rem 1.25rem', cursor: 'pointer' }} onClick={() => handleSort('registration_id')}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>Reg ID {sortConfig.key === 'registration_id' && (sortConfig.direction === 'asc' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>)}</div>
+                        </th>
+                      )}
+                      {visibleColumns.has('name') && (
+                        <th style={{ padding: '1.2rem 1.25rem', cursor: 'pointer' }} onClick={() => handleSort('name')}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>Student Name {sortConfig.key === 'name' && (sortConfig.direction === 'asc' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>)}</div>
+                        </th>
+                      )}
+                      {visibleColumns.has('current_time') && (
+                        <th style={{ padding: '1.2rem 1.25rem', cursor: 'pointer' }} onClick={() => handleSort('current_time')}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>Watch Time {sortConfig.key === 'current_time' && (sortConfig.direction === 'asc' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>)}</div>
+                        </th>
+                      )}
+                      {visibleColumns.has('completed') && (
+                        <th style={{ padding: '1.2rem 1.25rem', cursor: 'pointer' }} onClick={() => handleSort('completed')}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>Status {sortConfig.key === 'completed' && (sortConfig.direction === 'asc' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>)}</div>
+                        </th>
+                      )}
+                      {visibleColumns.has('actions') && (
+                        <th style={{ padding: '1.2rem 1.25rem', textAlign: 'right' }}>Actions</th>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
-                    {sortedUsers.length === 0 ? (
-                      <tr><td colSpan="5" style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>No active student progress records found</td></tr>
-                    ) : sortedUsers.map(user => (
-                      <tr key={user.user_id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)', transition: 'background 0.2s' }}>
-                        <td style={{ padding: '1.1rem 1.25rem' }}>
-                          <span style={{ fontFamily: 'monospace', color: '#38bdf8', background: 'rgba(56, 189, 248, 0.1)', padding: '4px 8px', borderRadius: '6px', border: '1px solid rgba(56, 189, 248, 0.2)', fontSize: '0.85rem' }}>
-                            {user.registration_id}
-                          </span>
-                        </td>
-                        <td style={{ padding: '1.1rem 1.25rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(135deg, #2563eb, #06b6d4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', fontWeight: '700', fontSize: '0.85rem', boxShadow: '0 2px 8px rgba(37,99,235,0.3)' }}>
-                              {(user.name || 'U').charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                              <div style={{ fontWeight: '700', color: '#f8fafc' }}>{user.name}</div>
-                              {user.email && <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{user.email}</div>}
-                            </div>
-                          </div>
-                        </td>
-                        <td style={{ padding: '1.1rem 1.25rem' }}>
-                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(56, 189, 248, 0.08)', color: '#38bdf8', padding: '4px 12px', borderRadius: '20px', fontSize: '0.85rem', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
-                            <Clock size={14} color="#38bdf8"/> {user.watched_timestamp}
-                          </div>
-                        </td>
-                        <td style={{ padding: '1.1rem 1.25rem' }}>
-                          {user.completed ? (
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#34d399', background: 'rgba(52, 211, 153, 0.12)', padding: '5px 14px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '700', border: '1px solid rgba(52, 211, 153, 0.3)' }}>
-                              <CheckCircle size={14} /> Completed
-                            </span>
-                          ) : (
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#fbbf24', background: 'rgba(251, 191, 36, 0.12)', padding: '5px 14px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '700', border: '1px solid rgba(251, 191, 36, 0.3)' }}>
-                              <Play size={14} /> In Progress
-                            </span>
+                    <AnimatePresence>
+                      {sortedUsers.length === 0 ? (
+                        <tr><td colSpan={visibleColumns.size} style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>No active student progress records found</td></tr>
+                      ) : sortedUsers.map((user, index) => (
+                        <motion.tr 
+                          key={user.user_id} 
+                          custom={index}
+                          initial="hidden"
+                          animate="visible"
+                          exit="hidden"
+                          variants={rowVariants}
+                          style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)', transition: 'background 0.2s' }}
+                          className="hover-bg-glass"
+                        >
+                          {visibleColumns.has('registration_id') && (
+                            <td style={{ padding: '1.1rem 1.25rem' }}>
+                              <span style={{ fontFamily: 'monospace', color: '#38bdf8', background: 'rgba(56, 189, 248, 0.1)', padding: '4px 8px', borderRadius: '6px', border: '1px solid rgba(56, 189, 248, 0.2)', fontSize: '0.85rem' }}>
+                                {user.registration_id}
+                              </span>
+                            </td>
                           )}
-                        </td>
-                        <td style={{ padding: '1.1rem 1.25rem', textAlign: 'right' }}>
-                          <button 
-                            onClick={() => resetProgress(user)}
-                            style={{ fontSize: '0.8rem', padding: '0.4rem 0.9rem', color: '#f87171', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.08)', cursor: 'pointer', border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: '600', transition: 'all 0.2s ease' }}
-                          >
-                            Reset
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                          {visibleColumns.has('name') && (
+                            <td style={{ padding: '1.1rem 1.25rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(135deg, #2563eb, #06b6d4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', fontWeight: '700', fontSize: '0.85rem', boxShadow: '0 2px 8px rgba(37,99,235,0.3)' }}>
+                                  {(user.name || 'U').charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                  <div style={{ fontWeight: '700', color: '#f8fafc' }}>{user.name}</div>
+                                  {user.email && <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{user.email}</div>}
+                                </div>
+                              </div>
+                            </td>
+                          )}
+                          {visibleColumns.has('current_time') && (
+                            <td style={{ padding: '1.1rem 1.25rem' }}>
+                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(56, 189, 248, 0.08)', color: '#38bdf8', padding: '4px 12px', borderRadius: '20px', fontSize: '0.85rem', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
+                                <Clock size={14} color="#38bdf8"/> {user.watched_timestamp}
+                              </div>
+                            </td>
+                          )}
+                          {visibleColumns.has('completed') && (
+                            <td style={{ padding: '1.1rem 1.25rem' }}>
+                              {user.completed ? (
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#ffffff', background: '#22c55e', padding: '5px 14px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '700', border: '1px solid rgba(34, 197, 94, 0.5)', boxShadow: '0 4px 12px rgba(34, 197, 94, 0.25)' }}>
+                                  <CheckCircle size={14} /> Completed
+                                </span>
+                              ) : (
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#ffffff', background: '#eab308', padding: '5px 14px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '700', border: '1px solid rgba(234, 179, 8, 0.5)', boxShadow: '0 4px 12px rgba(234, 179, 8, 0.25)' }}>
+                                  <Play size={14} /> In Progress
+                                </span>
+                              )}
+                            </td>
+                          )}
+                          {visibleColumns.has('actions') && (
+                            <td style={{ padding: '1.1rem 1.25rem', textAlign: 'right' }}>
+                              <button 
+                                onClick={() => resetProgress(user)}
+                                style={{ fontSize: '0.8rem', padding: '0.4rem 0.9rem', color: '#f87171', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.08)', cursor: 'pointer', border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: '600', transition: 'all 0.2s ease' }}
+                              >
+                                Reset
+                              </button>
+                            </td>
+                          )}
+                        </motion.tr>
+                      ))}
+                    </AnimatePresence>
                   </tbody>
                 </table>
               </div>
