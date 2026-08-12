@@ -1095,13 +1095,30 @@ input:checked + .toggle-slider:before {
   transform: translateY(-1px);
 }
 
+.dashboard-grid-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 2rem;
+  align-items: start;
+}
+
+.dashboard-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
 /* =========================================
    RESPONSIVE DESIGN (MOBILE & TABLET)
    ========================================= */
 
 /* Tablets & Small Desktop */
 @media (max-width: 992px) {
-  .dashboard-grid-layout {
+  .dashboard-grid-cards {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-metrics-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -1199,7 +1216,7 @@ input:checked + .toggle-slider:before {
     justify-content: space-between;
   }
   
-  .admin-tab-btn, .btn-aspire-primary {
+  .btn-aspire-primary {
     width: 100%;
     justify-content: center;
   }

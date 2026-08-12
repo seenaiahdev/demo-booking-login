@@ -356,7 +356,7 @@ export default function AdminDashboard({ onLogout }) {
               </p>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '2rem', alignItems: 'start' }}>
+            <div className="dashboard-grid-cards">
               
               {/* Left Column: Video Link Manager & Restrictions */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
@@ -522,7 +522,7 @@ export default function AdminDashboard({ onLogout }) {
             </div>
 
             {/* Top Metric Stats Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+            <div className="dashboard-metrics-grid">
               {/* Metric 1 */}
               <div className="admin-card-glass" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
                 <div style={{ padding: '16px', background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(56, 189, 248, 0.1))', borderRadius: '16px', border: '1px solid rgba(56, 189, 248, 0.3)', display: 'flex' }}>
