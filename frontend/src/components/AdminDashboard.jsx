@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ShieldCheck, LogOut, RefreshCw, Search, Filter, Play, CheckCircle, 
   Clock, Download, ArrowUp, ArrowDown, Users, TrendingUp, Sliders, 
-  Video, Monitor, Sparkles, Lock, Volume2, Maximize, AlertOctagon, UserCheck, Layers, Settings, Eye, EyeOff, Columns, ChevronDown
+  Video, Monitor, Sparkles, Lock, Volume2, Maximize, AlertOctagon, UserCheck, Layers, Settings, Eye, EyeOff, Columns, ChevronDown, Menu, X
 } from 'lucide-react';
 import ThreeBackground from './ThreeBackground';
 import logoImg from '../assests/Logo_f8hqc0.jpg';
@@ -25,6 +25,7 @@ export default function AdminDashboard({ onLogout }) {
   const allColumns = ['registration_id', 'name', 'current_time', 'completed', 'actions'];
   const [visibleColumns, setVisibleColumns] = useState(new Set(allColumns));
   const [isColumnDropdownOpen, setIsColumnDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const toggleColumn = (column) => {
     setVisibleColumns((prev) => {
@@ -305,12 +306,12 @@ export default function AdminDashboard({ onLogout }) {
   return (
     <div className="app-container" style={{ minHeight: '100vh', background: 'radial-gradient(circle at 15% 15%, rgba(37, 99, 235, 0.12) 0%, transparent 40%), radial-gradient(circle at 85% 85%, rgba(6, 182, 212, 0.08) 0%, transparent 40%), #0b0f19' }}>
       {/* Top Bar Header */}
-      <nav className="top-nav" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(11, 15, 25, 0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', position: 'sticky', top: 0, zIndex: 100 }}>
-        <div className="nav-logo" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-          <img src={logoImg} alt="Aspire Logo" style={{ height: '44px', width: 'auto', objectFit: 'contain' }} />
+      <nav className="top-nav" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(11, 15, 25, 0.95)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', position: 'sticky', top: 0, zIndex: 100 }}>
+        <div className="nav-logo" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <img src={logoImg} alt="Aspire Logo" style={{ height: '40px', width: 'auto', objectFit: 'contain' }} />
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ color: '#f8fafc', fontWeight: '800', fontSize: '1.25rem', letterSpacing: '-0.02em', background: 'linear-gradient(135deg, #ffffff 30%, #93c5fd 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              <span style={{ color: '#f8fafc', fontWeight: '800', fontSize: '1.2rem', letterSpacing: '-0.02em', background: 'linear-gradient(135deg, #ffffff 30%, #93c5fd 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                 AspireNext
               </span>
               <span style={{ padding: '2px 8px', borderRadius: '12px', background: 'rgba(37, 99, 235, 0.2)', border: '1px solid rgba(56, 189, 248, 0.3)', color: '#38bdf8', fontSize: '0.7rem', fontWeight: '700', letterSpacing: '0.05em' }}>
@@ -320,24 +321,26 @@ export default function AdminDashboard({ onLogout }) {
           </div>
         </div>
 
-        {/* 2 Clean Dashboard Tab Controls */}
-        <div className="admin-tabs-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', background: 'rgba(255,255,255,0.03)', padding: '5px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)' }}>
+        {/* Desktop Tab Controls */}
+        <div className="desktop-tabs-container" style={{ display: 'flex', gap: '0.5rem', background: 'rgba(255,255,255,0.03)', padding: '5px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)' }}>
           <button 
             className={`admin-tab-btn ${activeTab === 'VIDEO' ? 'active' : ''}`}
             onClick={() => setActiveTab('VIDEO')}
+            style={{ padding: '0.65rem 1.5rem', fontSize: '0.9rem' }}
           >
             <Video size={16} /> Video Management
           </button>
           <button 
             className={`admin-tab-btn ${activeTab === 'STUDENTS' ? 'active' : ''}`}
             onClick={() => setActiveTab('STUDENTS')}
+            style={{ padding: '0.65rem 1.5rem', fontSize: '0.9rem' }}
           >
             <Users size={16} /> Student Analytics
           </button>
         </div>
 
-        {/* Right Action */}
-        <div className="nav-actions-right" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        {/* Desktop Right Action */}
+        <div className="desktop-nav-actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.85rem', borderRadius: '20px', background: 'rgba(52, 211, 153, 0.08)', border: '1px solid rgba(52, 211, 153, 0.2)', color: '#34d399', fontSize: '0.75rem', fontWeight: '600' }}>
             <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#34d399', boxShadow: '0 0 8px #34d399' }}></span> System Live
           </div>
@@ -345,6 +348,62 @@ export default function AdminDashboard({ onLogout }) {
             <LogOut size={16} /> Exit Admin
           </button>
         </div>
+
+        {/* Mobile Hamburger Toggle Button */}
+        <button 
+          className="mobile-menu-toggle"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label="Toggle navigation menu"
+          style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.12)', color: '#f8fafc', padding: '0.5rem 0.75rem', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          {isMobileMenuOpen ? <X size={22} color="#38bdf8" /> : <Menu size={22} color="#38bdf8" />}
+        </button>
+
+        {/* Mobile Expandable Drawer Menu */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div 
+              className="mobile-expandable-menu"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              style={{ overflow: 'hidden', width: '100%' }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', paddingTop: '1rem', marginTop: '0.5rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                
+                {/* Tabs */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'rgba(255,255,255,0.03)', padding: '6px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <button 
+                    className={`admin-tab-btn ${activeTab === 'VIDEO' ? 'active' : ''}`}
+                    onClick={() => { setActiveTab('VIDEO'); setIsMobileMenuOpen(false); }}
+                    style={{ width: '100%', justifyContent: 'center', padding: '0.75rem' }}
+                  >
+                    <Video size={16} /> Video Management
+                  </button>
+                  <button 
+                    className={`admin-tab-btn ${activeTab === 'STUDENTS' ? 'active' : ''}`}
+                    onClick={() => { setActiveTab('STUDENTS'); setIsMobileMenuOpen(false); }}
+                    style={{ width: '100%', justifyContent: 'center', padding: '0.75rem' }}
+                  >
+                    <Users size={16} /> Student Analytics
+                  </button>
+                </div>
+
+                {/* Actions */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', paddingTop: '0.25rem' }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.9rem', borderRadius: '20px', background: 'rgba(52, 211, 153, 0.08)', border: '1px solid rgba(52, 211, 153, 0.2)', color: '#34d399', fontSize: '0.8rem', fontWeight: '600' }}>
+                    <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#34d399', boxShadow: '0 0 8px #34d399' }}></span> System Live
+                  </div>
+                  <button onClick={handleAdminExit} className="btn-logout-aspire" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(37, 99, 235, 0.12)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '0.55rem 1.2rem', borderRadius: '12px', fontWeight: '600', cursor: 'pointer', flex: 1, justifyContent: 'center' }}>
+                    <LogOut size={16} /> Exit Admin
+                  </button>
+                </div>
+
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
 
       {/* Main Content Area */}
@@ -362,10 +421,10 @@ export default function AdminDashboard({ onLogout }) {
               </p>
             </div>
 
-            <div className="dashboard-grid-cards">
+            <div className="dashboard-grid-cards" style={{ minWidth: 0 }}>
               
               {/* Left Column: Video Link Manager & Restrictions */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem', minWidth: 0, width: '100%' }}>
                 
                 {/* Card A: Video URL Config */}
                 <div className="admin-card-glass">
@@ -373,7 +432,7 @@ export default function AdminDashboard({ onLogout }) {
                     <div style={{ padding: '12px', background: 'rgba(37, 99, 235, 0.15)', borderRadius: '14px', border: '1px solid rgba(56, 189, 248, 0.3)', display: 'flex' }}>
                       <Video size={22} color="#38bdf8"/>
                     </div>
-                    <div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
                       <h2 style={{ color: '#f8fafc', margin: 0, fontSize: '1.2rem', fontWeight: '700' }}>Video Link Configuration</h2>
                       <p style={{ color: '#94a3b8', margin: '0.2rem 0 0 0', fontSize: '0.85rem' }}>Paste any video platform URL or direct media link</p>
                     </div>
@@ -412,7 +471,7 @@ export default function AdminDashboard({ onLogout }) {
                     <div style={{ padding: '12px', background: 'rgba(6, 182, 212, 0.15)', borderRadius: '14px', border: '1px solid rgba(6, 182, 212, 0.3)', display: 'flex' }}>
                       <Sliders size={22} color="#06b6d4"/>
                     </div>
-                    <div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
                       <h2 style={{ color: '#f8fafc', margin: 0, fontSize: '1.2rem', fontWeight: '700' }}>Student Playback Restrictions</h2>
                       <p style={{ color: '#94a3b8', margin: '0.2rem 0 0 0', fontSize: '0.85rem' }}>Toggle permitted user interactive features during playback</p>
                     </div>
@@ -480,7 +539,7 @@ export default function AdminDashboard({ onLogout }) {
                     <div style={{ padding: '10px', background: 'rgba(52, 211, 153, 0.15)', borderRadius: '12px', border: '1px solid rgba(52, 211, 153, 0.3)', display: 'flex' }}>
                       <Monitor size={20} color="#34d399"/>
                     </div>
-                    <div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
                       <h2 style={{ color: '#f8fafc', margin: 0, fontSize: '1.15rem', fontWeight: '700' }}>Live Stream Monitor</h2>
                       <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>Clean live player monitor preview</span>
                     </div>

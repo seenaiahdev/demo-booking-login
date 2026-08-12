@@ -1068,6 +1068,11 @@ input:checked + .toggle-slider:before {
   padding: 2rem;
   box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.5), 0 0 30px rgba(37, 99, 235, 0.08);
   transition: transform 0.25s ease, box-shadow 0.25s ease;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  min-width: 0;
 }
 
 .admin-card-glass:hover {
@@ -1101,6 +1106,7 @@ input:checked + .toggle-slider:before {
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
+  min-width: 0;
 }
 
 .top-nav {
@@ -1109,11 +1115,23 @@ input:checked + .toggle-slider:before {
   width: 100%;
 }
 
+.mobile-menu-toggle {
+  display: none !important;
+}
+
+.mobile-expandable-menu {
+  display: none !important;
+}
+
 .dashboard-grid-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
   gap: 2rem;
   align-items: start;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .dashboard-metrics-grid {
@@ -1121,6 +1139,10 @@ input:checked + .toggle-slider:before {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 1.5rem;
   margin-bottom: 2.5rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 /* =========================================
@@ -1130,26 +1152,42 @@ input:checked + .toggle-slider:before {
 /* Tablets & Small Desktop */
 @media (max-width: 992px) {
   .dashboard-grid-cards {
-    grid-template-columns: 1fr;
+    grid-template-columns: 100% !important;
+    width: 100% !important;
   }
   .dashboard-metrics-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 100% !important;
+    width: 100% !important;
   }
 }
 
 /* Mobile Devices */
 @media (max-width: 768px) {
   /* Header & Navigation */
+  .desktop-tabs-container, .desktop-nav-actions {
+    display: none !important;
+  }
+
+  .mobile-menu-toggle {
+    display: flex !important;
+  }
+
+  .mobile-expandable-menu {
+    display: block !important;
+  }
+
   .top-nav {
-    flex-direction: column !important;
-    gap: 0.85rem !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
     padding: 0.85rem 1rem !important;
-    align-items: stretch !important;
+    align-items: center !important;
+    justify-content: space-between !important;
   }
 
   .nav-logo {
-    justify-content: center !important;
-    width: 100% !important;
+    justify-content: flex-start !important;
+    width: auto !important;
   }
 
   .admin-tabs-container {
