@@ -305,7 +305,7 @@ export default function AdminDashboard({ onLogout }) {
   return (
     <div className="app-container" style={{ minHeight: '100vh', background: 'radial-gradient(circle at 15% 15%, rgba(37, 99, 235, 0.12) 0%, transparent 40%), radial-gradient(circle at 85% 85%, rgba(6, 182, 212, 0.08) 0%, transparent 40%), #0b0f19' }}>
       {/* Top Bar Header */}
-      <nav className="top-nav" style={{ padding: '1rem 2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(11, 15, 25, 0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', position: 'sticky', top: 0, zIndex: 100 }}>
+      <nav className="top-nav" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(11, 15, 25, 0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', position: 'sticky', top: 0, zIndex: 100 }}>
         <div className="nav-logo" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           <img src={logoImg} alt="Aspire Logo" style={{ height: '44px', width: 'auto', objectFit: 'contain' }} />
           <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -325,21 +325,19 @@ export default function AdminDashboard({ onLogout }) {
           <button 
             className={`admin-tab-btn ${activeTab === 'VIDEO' ? 'active' : ''}`}
             onClick={() => setActiveTab('VIDEO')}
-            style={{ padding: '0.65rem 1.5rem', fontSize: '0.9rem' }}
           >
             <Video size={16} /> Video Management
           </button>
           <button 
             className={`admin-tab-btn ${activeTab === 'STUDENTS' ? 'active' : ''}`}
             onClick={() => setActiveTab('STUDENTS')}
-            style={{ padding: '0.65rem 1.5rem', fontSize: '0.9rem' }}
           >
             <Users size={16} /> Student Analytics
           </button>
         </div>
 
         {/* Right Action */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div className="nav-actions-right" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.85rem', borderRadius: '20px', background: 'rgba(52, 211, 153, 0.08)', border: '1px solid rgba(52, 211, 153, 0.2)', color: '#34d399', fontSize: '0.75rem', fontWeight: '600' }}>
             <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#34d399', boxShadow: '0 0 8px #34d399' }}></span> System Live
           </div>
@@ -350,7 +348,7 @@ export default function AdminDashboard({ onLogout }) {
       </nav>
 
       {/* Main Content Area */}
-      <main className="main-content" style={{ padding: '2.5rem', maxWidth: '1440px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
+      <main className="main-content">
         
         {/* DASHBOARD 1: VIDEO MANAGEMENT DASHBOARD */}
         {activeTab === 'VIDEO' && (
@@ -591,7 +589,7 @@ export default function AdminDashboard({ onLogout }) {
 
               {/* Filter controls */}
               <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.75rem', flexWrap: 'wrap' }}>
-                <div className="form-group-aspire" style={{ flex: 1, margin: 0, minWidth: '260px' }}>
+                <div className="form-group-aspire" style={{ flex: 1, margin: 0, minWidth: '180px' }}>
                   <div className="input-wrapper-aspire">
                     <Search className="input-icon-aspire" size={16} color="#38bdf8" />
                     <input 
@@ -603,7 +601,7 @@ export default function AdminDashboard({ onLogout }) {
                     />
                   </div>
                 </div>
-                <div className="form-group-aspire" style={{ width: '200px', margin: 0 }}>
+                <div className="form-group-aspire" style={{ flex: '1 1 140px', margin: 0 }}>
                   <div className="input-wrapper-aspire" style={{ padding: 0 }}>
                     <select 
                       className="input-aspire" 
