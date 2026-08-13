@@ -5,7 +5,7 @@ import { syncProgressWithBackend } from '../utils/storage';
 
 const FALLBACK_YT_VIDEO_ID = 'https://www.youtube.com/watch?v=8KCuHHeC_M0';
 
-export default function VideoPlayer({ user, savedProgress, onComplete, onDurationChange }) {
+export default function VideoPlayer({ user, savedProgress, onComplete, onDurationChange, onProgressUpdate }) {
   const containerRef = useRef(null);
   const playerRef = useRef(null);
   const lastSavedSecondRef = useRef(-1);
@@ -73,6 +73,7 @@ export default function VideoPlayer({ user, savedProgress, onComplete, onDuratio
     const currentSecond = Math.floor(actualTime);
 
     setCurrentTime(actualTime);
+    if (onProgressUpdate) onProgressUpdate(actualTime);
 
     // Anti-cheat: prevent skipping ahead
     setMaxWatchedTime(prev => {
@@ -190,6 +191,8 @@ export default function VideoPlayer({ user, savedProgress, onComplete, onDuratio
               onProgress={handleProgress}
               onDuration={handleDuration}
               onEnded={handleEnded}
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
               width="100%"
               height="100%"
               style={{ position: 'absolute', top: 0, left: 0 }}

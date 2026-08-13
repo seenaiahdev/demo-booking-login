@@ -156,6 +156,7 @@ export default function App() {
                   savedProgress={savedProgress}
                   onComplete={handleVideoCompleted}
                   onDurationChange={setVideoDuration}
+                  onProgressUpdate={(time) => setSavedProgress(prev => ({ ...prev, currentTime: time }))}
                 />
               </div>
 

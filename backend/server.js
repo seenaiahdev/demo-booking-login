@@ -40,16 +40,21 @@ router.post('/login', async (req, res) => {
     let queryError = null;
 
     try {
-      const res1 = await supabase.from('demo_booking').select('*');
-      if (!res1.error && res1.data && res1.data.length > 0) {
-        records = res1.data;
-      } else {
-        const res2 = await supabase.from('demo_bookings').select('*');
-        if (!res2.error && res2.data && res2.data.length > 0) {
-          records = res2.data;
-        } else {
-          queryError = res1.error || res2.error;
-        }
+      const [res1, res2] = await Promise.all([
+        supabase.from('demo_booking').select('*'),
+        supabase.from('demo_bookings').select('*')
+      ]);
+
+      if (!res1.error && res1.data) {
+        records = records.concat(res1.data);
+      } else if (res1.error) {
+        queryError = res1.error;
+      }
+
+      if (!res2.error && res2.data) {
+        records = records.concat(res2.data);
+      } else if (res2.error) {
+        queryError = queryError || res2.error;
       }
     } catch (errQ) {
       console.error('Database fetch error:', errQ);
@@ -76,10 +81,11 @@ router.post('/login', async (req, res) => {
     }
 
     const userPass = String(userExists.password || userExists.pass || userExists.generated_password || '').trim();
-    const nameVal = String(userExists.full_name || userExists.name || userExists.firstname || userExists.first_name || '').trim().toLowerCase();
+    const fullName = String(userExists.full_name || userExists.name || userExists.firstname || userExists.first_name || '').trim();
+    const firstName = fullName.split(' ')[0].toLowerCase();
     const userPhone = String(userExists.mobile || userExists.mbnum || userExists.phone || '').trim().replace(/[^0-9]/g, '');
     const last4 = userPhone.slice(-4);
-    const derivedPass = `${nameVal}@${last4}`;
+    const derivedPass = `${firstName}@${last4}`;
 
     const passwordMatch = (userPass && userPass === cleanPassword) || (derivedPass && derivedPass === cleanPassword.toLowerCase());
 
@@ -217,12 +223,12 @@ router.post('/progress/:userId', async (req, res) => {
   if (!registration_id || !name || name === userId) {
     try {
       let records = [];
-      const res1 = await supabase.from('demo_booking').select('*');
-      if (!res1.error && res1.data) records = res1.data;
-      else {
-        const res2 = await supabase.from('demo_bookings').select('*');
-        if (!res2.error && res2.data) records = res2.data;
-      }
+      const [res1, res2] = await Promise.all([
+        supabase.from('demo_booking').select('*'),
+        supabase.from('demo_bookings').select('*')
+      ]);
+      if (!res1.error && res1.data) records = records.concat(res1.data);
+      if (!res2.error && res2.data) records = records.concat(res2.data);
 
       const cleanUserId = String(userId).trim();
       const matched = records.find(u => {
@@ -308,9 +314,26 @@ router.post('/progress/:userId', async (req, res) => {
 // 4. ADMIN ENDPOINTS
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Admin@123';
 
-const handleAdminVerify = (req, res) => {
+const verifyAdmin = async (password) => {
+  if (!password) return false;
+  if (password === ADMIN_PASSWORD) return true; // Keep fallback
+  
+  try {
+    const { data: b1 } = await supabase.from('demo_booking').select('generated_password, password, pass').eq('generated_password', password).maybeSingle();
+    if (b1) return true;
+    
+    const { data: b2 } = await supabase.from('demo_bookings').select('generated_password').eq('generated_password', password).maybeSingle();
+    if (b2) return true;
+  } catch (err) {
+    console.error('Admin DB verify error:', err);
+  }
+  return false;
+};
+
+const handleAdminVerify = async (req, res) => {
   const { password } = req.body || {};
-  if (password === ADMIN_PASSWORD) {
+  const isValid = await verifyAdmin(password);
+  if (isValid) {
     return res.json({ success: true });
   }
   return res.status(401).json({ success: false, message: 'Invalid admin password' });
@@ -321,7 +344,8 @@ router.post('/admin/login', handleAdminVerify);
 
 router.get('/admin/users', async (req, res) => {
   const password = req.headers['x-admin-password'];
-  if (password !== ADMIN_PASSWORD) return res.status(401).json({ success: false });
+  const isValid = await verifyAdmin(password);
+  if (!isValid) return res.status(401).json({ success: false });
 
   try {
     const { data: progressData, error } = await supabase
@@ -335,12 +359,12 @@ router.get('/admin/users', async (req, res) => {
     // Fetch demo_booking records to enrich email & mobile number
     let bookings = [];
     try {
-      const res1 = await supabase.from('demo_booking').select('*');
-      if (!res1.error && res1.data) bookings = res1.data;
-      else {
-        const res2 = await supabase.from('demo_bookings').select('*');
-        if (!res2.error && res2.data) bookings = res2.data;
-      }
+      const [res1, res2] = await Promise.all([
+        supabase.from('demo_booking').select('*'),
+        supabase.from('demo_bookings').select('*')
+      ]);
+      if (!res1.error && res1.data) bookings = bookings.concat(res1.data);
+      if (!res2.error && res2.data) bookings = bookings.concat(res2.data);
     } catch (errBooking) {
       console.warn('Could not fetch demo_booking for enrichment:', errBooking);
     }
@@ -375,7 +399,8 @@ router.get('/admin/users', async (req, res) => {
 
 router.post('/admin/reset-progress', async (req, res) => {
   const { password, user_id, registration_id, name } = req.body || {};
-  if (password !== ADMIN_PASSWORD) return res.status(401).json({ success: false });
+  const isValid = await verifyAdmin(password);
+  if (!isValid) return res.status(401).json({ success: false });
 
   try {
     await supabase.from('video_progress').delete().eq('user_id', user_id);
@@ -437,7 +462,8 @@ router.get('/video-config', async (req, res) => {
 
 router.post('/video-config', async (req, res) => {
   const { password, videoId, controls } = req.body || {};
-  if (password !== ADMIN_PASSWORD) return res.status(401).json({ success: false });
+  const isValid = await verifyAdmin(password);
+  if (!isValid) return res.status(401).json({ success: false });
 
   try {
     if (videoId && typeof videoId === 'string' && videoId.trim().length > 0) {
